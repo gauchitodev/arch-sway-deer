@@ -21,7 +21,9 @@ import xml.etree.ElementTree as ET
 from datetime import date, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-PUERTO = int(os.environ.get("G5_PUERTO", 8765))
+# Cada usuario usa su propio puerto (8765 el primero, 8766 el segundo...), así la pantalla
+# de inicio de una persona nunca se conecta al servidor de otra que quedó andando.
+PUERTO = int(os.environ.get("G5_PUERTO", 8765 + max(0, os.getuid() - 1000) % 1000))
 CARPETA = os.path.dirname(os.path.abspath(__file__))
 ESTADO = os.environ.get("G5_ESTADO") or os.path.join(CARPETA, "estado.json")
 # Modo demo (para sacar capturas sin datos personales): G5_DEMO=1

@@ -99,10 +99,10 @@ Para sacar capturas con notas y wifi de mentira, hay un modo demo que corre en o
 y no toca tu configuración:
 
 ```
-G5_DEMO=1 G5_PUERTO=8766 G5_ESTADO=/tmp/demo.json G5_RED=/tmp/red.json python3 ~/.config/g5/home/server.py
+G5_DEMO=1 G5_PUERTO=8790 G5_ESTADO=/tmp/demo.json G5_RED=/tmp/red.json python3 ~/.config/g5/home/server.py
 ```
 
-y abrí `http://127.0.0.1:8766/` en Chromium.
+y abrí `http://127.0.0.1:8790/` en Chromium.
 
 ## Desinstalar
 
