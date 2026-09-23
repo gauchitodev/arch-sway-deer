@@ -317,15 +317,19 @@ def volumen():
 
 
 def musica():
-    formato = "{{status}}\t{{title}}\t{{artist}}\t{{mpris:artUrl}}\t{{playerName}}"
+    formato = ("{{status}}\t{{title}}\t{{artist}}\t{{mpris:artUrl}}\t{{playerName}}"
+               "\t{{xesam:album}}\t{{position}}\t{{mpris:length}}")
     salida = correr(["playerctl", "metadata", "--format", formato], timeout=2).strip()
     if not salida:
         return None
-    partes = (salida.split("\t") + [""] * 5)[:5]
-    estado, titulo, artista, portada, reproductor = partes
+    partes = (salida.split("\t") + [""] * 8)[:8]
+    estado, titulo, artista, portada, reproductor, album, pos, largo = partes
     if portada.startswith("file://"):
         portada = "/portada?v=" + urllib.parse.quote(portada[-12:])
-    return {"estado": estado, "titulo": titulo, "artista": artista, "portada": portada, "reproductor": reproductor}
+    # playerctl da microsegundos; al navegador le mandamos segundos
+    seg = lambda v: round(int(v) / 1e6, 1) if v.isdigit() else None
+    return {"estado": estado, "titulo": titulo, "artista": artista, "portada": portada,
+            "reproductor": reproductor, "album": album, "pos": seg(pos), "largo": seg(largo)}
 
 
 def portada_local():
@@ -831,6 +835,21 @@ class Manejador(BaseHTTPRequestHandler):
             return self._responder(200 if ok else 404, {"ok": ok})
         if self.path == "/api/musica" and cuerpo.get("accion") in ("play-pause", "next", "previous"):
             correr(["playerctl", cuerpo["accion"]])
+            return self._responder(200, {"ok": True})
+        if self.path == "/api/musica" and cuerpo.get("accion") == "ir":
+            s = cuerpo.get("seg")
+            if not isinstance(s, (int, float)) or isinstance(s, bool) or not 0 <= s <= 36000:
+                return self._responder(400, {"error": "seg"})
+            correr(["playerctl", "position", str(round(float(s), 1))])
+            return self._responder(200, {"ok": True})
+        if self.path == "/api/musica" and cuerpo.get("accion") == "volumen":
+            v = cuerpo.get("pct")
+            if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= 100:
+                return self._responder(400, {"error": "pct"})
+            correr(["pamixer", "--unmute", "--set-volume", str(v)])
+            return self._responder(200, {"ok": True})
+        if self.path == "/api/musica" and cuerpo.get("accion") == "silencio":
+            correr(["pamixer", "--toggle-mute"])
             return self._responder(200, {"ok": True})
         if self.path == "/api/video" and re.fullmatch(r"[A-Za-z0-9_-]{11}", str(cuerpo.get("id", ""))):
             subprocess.run(["swaymsg", "workspace", "back_and_forth"], capture_output=True)

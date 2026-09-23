@@ -189,6 +189,23 @@
   .mus-art svg { width: 30px; height: 30px; }
   .mus-art img { width: 100%; height: 100%; object-fit: cover; }
   .mod.g .mus-art { width: 180px; height: 180px; }
+  /* Fondo: la portada desenfocada, como en las apps de música */
+  .mod[data-k="musica"] .body { position: relative; }
+  .mod[data-k="musica"] .body > :not(.mus-fondo) { position: relative; }
+  .mus-fondo { position: absolute; inset: 0; background: center / cover no-repeat; filter: blur(28px) saturate(1.3); opacity: .35; transform: scale(1.2); pointer-events: none; }
+  .mus-txt em { font-style: normal; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mus-txt em:empty { display: none; }
+  .mod.g .mus-txt b { font-size: 24px; white-space: normal; }
+  .mod.g .mus-txt span { font-size: 17px; }
+  .mus-prog, .mus-vol { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .mus-prog input, .mus-vol input { flex: 1; min-width: 0; height: 36px; margin: 0; accent-color: var(--green-bright); cursor: pointer; touch-action: none; }
+  .mus-prog input:disabled { opacity: .4; cursor: default; }
+  .mus-vol button { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 4px; cursor: pointer;
+    background: var(--tile-top); color: var(--ink); border: 1px solid var(--tile-edge); }
+  .mus-vol button svg { width: 22px; height: 22px; }
+  .mus-vol button.mudo { background: var(--crit); color: #fff; border-color: var(--crit); }
+  .mus-vol b { min-width: 3ch; text-align: right; color: var(--ink); }
+  .mod.s .mus-prog, .mod.s .mus-vol, .mod.s .mus-txt em { display: none; }
   .mus-txt { display: grid; gap: 3px; min-width: 0; }
   .mus-txt b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mus-txt span { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -200,7 +217,8 @@
   }
   .mus-ctl button svg { width: 22px; height: 22px; }
   .mus-ctl #musPP { background: var(--green); color: #fff; border-color: var(--green-deep); }
-  .mus-ctl .mus-abrir { margin-left: auto; }
+  .mus-ctl .mus-abrir { flex: none; }
+  .mus-ctl .mus-vol { flex: 1; min-width: 0; margin-left: 6px; }
   .mod.s .mus-ctl .mus-abrir { display: none; }
 
   .mapa-wrap { border-radius: 3px; overflow: hidden; border: 1px solid var(--tile-edge); min-height: 60px; }
@@ -496,7 +514,9 @@
     prev: '<path d="M6 5v14M19 5L9 12l10 7z"/>',
     next: '<path d="M18 5v14M5 5l10 7-10 7z"/>',
     playic: '<path d="M7 4l13 8-13 8z"/>',
-    pause: '<path d="M7 4h4v16H7zM14 4h4v16h-4z"/>'
+    pause: '<path d="M7 4h4v16H7zM14 4h4v16h-4z"/>',
+    vol: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
+    mudo: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/>'
   };
   const svgIco = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">${ICONOS_PANEL[k]}</svg>`;
   const MODS = {
@@ -539,13 +559,19 @@
              <div class="bt-pie"><button type="button" class="chip" data-bt="buscar" id="btBuscar">Buscar nuevos</button></div>` },
     amfbot: { name: "Bot", html: `<div class="bot"><span class="bot-luz" id="botLuz"></span><span class="bot-txt" id="botTxt">Revisando…</span></div><div class="sub" id="botSub">—</div>` },
     reloj:  { name: "Reloj", html: `<div class="reloj"><span id="relojHora">--:--</span><small id="relojSeg">00</small></div><div class="sub fecha" id="relojFecha">—</div>` },
-    musica: { name: "Música", title: "Sonando ahora", html: `<div class="mus">
+    musica: { name: "Música", title: "Sonando ahora", html: `<div class="mus-fondo" id="musFondo"></div>
+             <div class="mus">
                <div class="mus-art" id="musArt">${svgIco("music")}</div>
-               <div class="mus-txt"><b id="musTit">Nada sonando</b><span id="musAut">Abrí YouTube Music o un video</span></div></div>
+               <div class="mus-txt"><b id="musTit">Nada sonando</b><span id="musAut">Abrí YouTube Music o un video</span><em id="musAlb"></em></div></div>
+             <div class="mus-prog"><span id="musPos">0:00</span>
+               <input type="range" id="musBar" min="0" max="1" step="1" value="0" aria-label="Posición del tema" disabled>
+               <span id="musLen">0:00</span></div>
              <div class="mus-ctl">
                <button type="button" data-mus="previous" aria-label="Anterior">${svgIco("prev")}</button>
                <button type="button" data-mus="play-pause" aria-label="Reproducir o pausar" id="musPP">${svgIco("playic")}</button>
                <button type="button" data-mus="next" aria-label="Siguiente">${svgIco("next")}</button>
+               <div class="mus-vol"><button type="button" id="musMute" aria-label="Silenciar o activar el sonido">${svgIco("vol")}</button>
+                 <input type="range" id="musVol" min="0" max="100" step="1" value="50" aria-label="Volumen"><b id="musVolTxt">—</b></div>
                <button type="button" data-abrir="app:ytmusic.desktop" class="mus-abrir">YT Music</button></div>` },
     mapa:   { name: "Mapa", html: `<div class="mapa-wrap"><iframe id="mapaFrame" title="Mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
              <div class="mapa-pie"><span class="sub" id="mapaLugar">—</span><button type="button" class="chip" data-abrir="app:maps.desktop">Abrir Google Maps</button></div>
@@ -617,6 +643,7 @@
     const b = e.target.closest("button"); if (!b || b.closest(".edit-ctl")) return;
     if (b.dataset.vid && !editing) { api("/api/video", { id: b.dataset.vid }).catch(() => {}); return; }
     if (b.dataset.mus) { api("/api/musica", { accion: b.dataset.mus }).then(actualizar).catch(() => {}); return; }
+    if (b.id === "musMute") { api("/api/musica", { accion: "silencio" }).then(actualizar).catch(() => {}); return; }
     if (b.dataset.abrir && !editing) { api("/api/lanzar", { que: b.dataset.abrir }).catch(() => {}); return; }
     if (b.id === "mapaGuardar") {
       const v = $("mapaInput").value.trim(); if (!v) return;
@@ -637,6 +664,42 @@
       return;
     }
     if (b.dataset.ytrm) { api("/api/yt/quitar", { id: b.dataset.ytrm }).then(() => cargarYT(true)).catch(() => {}); }
+  });
+
+  // ---------- Música: barra de avance, adelantar y volumen ----------
+  // El servidor manda la posición cada 2 s; entre medio la barra avanza sola.
+  let musT = null, musBarTocando = false, musVolTocando = false, musVolTimer = null;
+  const mmss = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  function musTiempo(mu) {
+    musT = mu && mu.largo ? { pos: mu.pos || 0, largo: mu.largo, sonando: mu.estado === "Playing", desde: performance.now() } : null;
+    pintarAvance();
+  }
+  function pintarAvance() {
+    const bar = $("musBar"); if (!bar || musBarTocando) return;
+    if (!musT) { bar.disabled = true; bar.max = 1; bar.value = 0; set("musPos", "0:00"); set("musLen", "0:00"); return; }
+    const pos = Math.min(musT.largo, musT.pos + (musT.sonando ? (performance.now() - musT.desde) / 1000 : 0));
+    bar.disabled = false; bar.max = Math.floor(musT.largo); bar.value = Math.floor(pos);
+    set("musPos", mmss(pos)); set("musLen", mmss(musT.largo));
+  }
+  setInterval(pintarAvance, 500);
+  document.addEventListener("input", (e) => {
+    if (e.target.id === "musBar") { musBarTocando = true; set("musPos", mmss(e.target.value)); }
+    if (e.target.id === "musVol") {
+      musVolTocando = true; set("musVolTxt", e.target.value);
+      clearTimeout(musVolTimer);
+      const pct = Number(e.target.value);
+      musVolTimer = setTimeout(() => {
+        api("/api/musica", { accion: "volumen", pct }).catch(() => {})
+          .finally(() => setTimeout(() => { musVolTocando = false; }, 1500));
+      }, 120);
+    }
+  });
+  document.addEventListener("change", (e) => {
+    if (e.target.id !== "musBar") return;
+    const seg = Number(e.target.value);
+    if (musT) { musT.pos = seg; musT.desde = performance.now(); }
+    musBarTocando = false; pintarAvance();
+    api("/api/musica", { accion: "ir", seg }).catch(() => {});
   });
 
   function guardar() { api("/api/estado", { paginas }).catch(() => {}); }
@@ -1253,10 +1316,23 @@
         if (src && art.dataset.src !== src) { art.dataset.src = src; art.innerHTML = `<img src="${esc(src)}" alt="">`; }
         if (!src) { art.dataset.src = ""; art.innerHTML = svgIco("music"); }
         $("musPP").innerHTML = svgIco(mu.estado === "Playing" ? "pause" : "playic");
+        set("musAlb", mu.album || "");
+        const fondo = $("musFondo");
+        if (fondo.dataset.src !== src) { fondo.dataset.src = src; fondo.style.backgroundImage = src ? `url("${encodeURI(src)}")` : ""; }
+        musTiempo(mu);
       } else {
         set("musTit", "Nada sonando"); set("musAut", "Abrí YouTube Music o un video");
         $("musArt").dataset.src = ""; $("musArt").innerHTML = svgIco("music");
         $("musPP").innerHTML = svgIco("playic");
+        set("musAlb", ""); $("musFondo").dataset.src = ""; $("musFondo").style.backgroundImage = "";
+        musTiempo(null);
+      }
+      if (!musVolTocando && d.volumen && d.volumen.pct != null) {
+        $("musVol").value = d.volumen.pct; set("musVolTxt", d.volumen.pct);
+      }
+      if (d.volumen) {
+        $("musMute").classList.toggle("mudo", !!d.volumen.mudo);
+        $("musMute").innerHTML = svgIco(d.volumen.mudo ? "mudo" : "vol");
       }
     }
 
