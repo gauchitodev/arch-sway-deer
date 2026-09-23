@@ -691,12 +691,45 @@ def estado_leer():
         return {}
 
 
+def paginas_limpias(paginas):
+    """Deja solo páginas con paneles bien formados: clave corta, tamaño s/m/g y
+    lugar (x, y, w, h) como fracciones entre 0 y 1. Devuelve None si no sirve."""
+    if not isinstance(paginas, list) or not 1 <= len(paginas) <= 20:
+        return None
+    limpias = []
+    for pag in paginas:
+        paneles = pag.get("paneles") if isinstance(pag, dict) else None
+        if not isinstance(paneles, list):
+            return None
+        lista = []
+        for p in paneles[:40]:
+            if not isinstance(p, dict):
+                continue
+            k = p.get("k")
+            if not isinstance(k, str) or not re.fullmatch(r"[a-z]{1,20}", k):
+                continue
+            q = {"k": k, "t": p.get("t") if p.get("t") in ("s", "m", "g") else "s"}
+            lugar = [p.get(c) for c in ("x", "y", "w", "h")]
+            if all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                   and 0 <= v <= 1 for v in lugar):
+                q.update(zip(("x", "y", "w", "h"), (round(float(v), 4) for v in lugar)))
+            lista.append(q)
+        limpias.append({"paneles": lista})
+    return limpias
+
+
 def estado_guardar(nuevo):
     permitido = {k: nuevo[k] for k in ("paginas", "modo", "favoritas", "sonido", "notas", "mapa") if k in nuevo}
     if not isinstance(permitido.get("mapa", ""), str):
         permitido.pop("mapa")
     if not isinstance(permitido.get("notas", ""), str):
         permitido.pop("notas")
+    if "paginas" in permitido:
+        paginas = paginas_limpias(permitido["paginas"])
+        if paginas is None:
+            permitido.pop("paginas")
+        else:
+            permitido["paginas"] = paginas
     actual = estado_leer()
     if "paginas" in permitido:
         actual.pop("paneles", None)  # formato viejo, de una sola página

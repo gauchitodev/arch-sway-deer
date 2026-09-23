@@ -89,20 +89,21 @@
 
   /* Página de trabajo */
   .run { grid-row: 3; display: grid; grid-template-columns: 1fr 270px; min-height: 0; }
-  .modules {
-    padding: 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
-    grid-auto-rows: max-content; grid-auto-flow: row dense;
-    align-content: start; overflow: hidden; position: relative;
+  .modules { padding: 18px; overflow: hidden; position: relative; min-height: 0; }
+  /* Lienzo libre: cada panel guarda su lugar y tamaño en fracciones del lienzo */
+  .lienzo { position: relative; height: 100%; transform-origin: top center; }
+  .editing .lienzo {
+    background-image: radial-gradient(circle, rgba(255, 222, 0, .45) 1.2px, transparent 1.6px);
+    background-size: var(--paso, 16px) var(--paso, 16px);
   }
-  .modules.editing { overflow-y: auto; }
   .mod {
     background: var(--tile-glass); border: 1px solid var(--tile-edge); border-radius: 4px;
-    display: grid; grid-template-rows: auto 1fr; position: relative; min-height: 170px;
+    display: grid; grid-template-rows: auto 1fr; position: absolute; box-sizing: border-box;
+    min-width: 0; min-height: 0; overflow: hidden;
     backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
   }
-  /* Tamaños de módulo, como en la G5 */
-  .mod.m { grid-column: span 2; }
-  .mod.g { grid-column: span 2; grid-row: span 2; }
+  .mod .body { min-height: 0; overflow: hidden; }
+  /* El tamaño (s / m / g) se deduce solo de las medidas del panel */
   .mod.g .body { gap: 18px; padding: 20px; }
   .mod.g .big { font-size: 92px; }
   .mod.g .big small { font-size: 32px; }
@@ -191,9 +192,10 @@
   .mus-ctl .mus-abrir { margin-left: auto; }
   .mod.s .mus-ctl .mus-abrir { display: none; }
 
-  .mapa-wrap { border-radius: 3px; overflow: hidden; border: 1px solid var(--tile-edge); height: 110px; }
-  .mod.m .mapa-wrap { height: 150px; }
-  .mod.g .mapa-wrap { height: 300px; }
+  .mapa-wrap { border-radius: 3px; overflow: hidden; border: 1px solid var(--tile-edge); min-height: 60px; }
+  /* Mapa y notas llenan el panel, sea del tamaño que sea */
+  .mod[data-k="mapa"] .body { grid-template-rows: 1fr; grid-auto-rows: auto; align-content: stretch; }
+  .mod[data-k="notas"] .body { grid-template-rows: 1fr auto; align-content: stretch; }
   .mapa-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
   .mapa-pie { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .mod.s .mapa-pie .chip { display: none; }
@@ -235,17 +237,34 @@
   .mod.g .bot-luz { width: 48px; height: 48px; }
   .mod.g .bot-txt { font-size: 52px; }
   .notas {
-    width: 100%; min-height: 110px; height: 100%; box-sizing: border-box; resize: none;
+    width: 100%; min-height: 50px; height: 100%; box-sizing: border-box; resize: none;
     font: 16px/1.45 var(--font); color: var(--ink); background: var(--tile-top);
     border: 1px solid var(--tile-edge); border-radius: 3px; padding: 10px 12px;
     user-select: text; -webkit-user-select: text;
   }
   .notas:focus { outline: 2px solid var(--green-bright); }
-  .mod.g .notas { min-height: 290px; font-size: 18px; }
+  .mod.g .notas { font-size: 18px; }
   .editing .notas { pointer-events: none; opacity: .6; }
   .edit-ctl { display: none; }
-  .editing .mod { outline: 3px dashed var(--yellow); outline-offset: 2px; }
-  .editing .edit-ctl { display: flex; gap: 6px; position: absolute; top: 4px; right: 4px; }
+  .editing .mod { outline: 3px dashed var(--yellow); outline-offset: -3px; cursor: grab; touch-action: none; }
+  .editing .mod.agarrado { cursor: grabbing; z-index: 20; box-shadow: 0 10px 28px rgba(0, 0, 0, .45); opacity: .93; }
+  .editing .edit-ctl { display: flex; gap: 6px; position: absolute; top: 4px; right: 4px; z-index: 2; }
+  /* Tirador para agrandar: esquina de abajo a la derecha, grande para el dedo */
+  .tirador { display: none; }
+  .editing .tirador {
+    display: block; position: absolute; right: 0; bottom: 0; width: 44px; height: 44px; z-index: 2;
+    cursor: nwse-resize; touch-action: none;
+    background: linear-gradient(135deg, transparent 50%, var(--yellow) 50%);
+  }
+  .tirador::after {
+    content: ""; position: absolute; right: 7px; bottom: 7px; width: 12px; height: 12px;
+    border-right: 3px solid var(--yellow-ink); border-bottom: 3px solid var(--yellow-ink);
+  }
+  .medida {
+    position: absolute; left: 8px; bottom: 8px; z-index: 2; display: none;
+    background: var(--yellow); color: var(--yellow-ink); font: 700 12px var(--font); padding: 3px 7px; border-radius: 3px;
+  }
+  .mod.agarrado .medida { display: block; }
   .edit-ctl button {
     font: 700 16px var(--font); cursor: pointer; border-radius: 3px; min-width: 40px; min-height: 36px;
     background: var(--tile-top); color: var(--ink); border: 1px solid var(--tile-edge);
@@ -253,7 +272,7 @@
   .edit-ctl .tam { padding: 0 10px; background: var(--yellow); color: var(--yellow-ink); border-color: #b39b00; }
   .edit-ctl .rm { background: var(--crit); color: #fff; border-color: var(--crit); }
   .edit-ctl button:disabled { opacity: .35; }
-  .hint { grid-column: 1 / -1; color: #fff; text-shadow: 0 1px 3px #000; font-size: 16px; padding: 40px 0; text-align: center; }
+  .hint { color: #fff; text-shadow: 0 1px 3px #000; font-size: 16px; padding: 40px 0; text-align: center; }
 
   .center { border-left: 1px solid var(--tile-edge); background: var(--center-glass); backdrop-filter: blur(8px); display: flex; flex-direction: column; overflow-y: auto; }
   .center h4 {
@@ -376,7 +395,6 @@
   }
   .offline[hidden] { display: none !important; }
 
-  @media (max-width: 1100px) { .modules { grid-template-columns: repeat(3, 1fr); } }
   @media (prefers-reduced-motion: reduce) { .gauge i { transition: none; } }
   /* Cambio día/noche: toda la pantalla se funde de un modo al otro */
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .8s; animation-timing-function: ease-in-out; }
@@ -527,7 +545,6 @@
     vol:    { name: "Volumen", html: `<div class="big"><span id="vol">—</span><small>%</small></div><div class="gauge"><i id="volG"></i></div><div class="sub" id="volSub"></div>` }
   };
   const TAM = ["s", "m", "g"];
-  const TAM_TXT = { s: "Chico", m: "Ancho", g: "Grande" };
   const DEFAULT = () => [{ paneles: [
     ["amfbot", "s"], ["cpu", "m"], ["ram", "s"],
     ["bat", "m"], ["net", "m"],
@@ -566,7 +583,6 @@
         <img src="https://i.ytimg.com/vi/${esc(v.id)}/mqdefault.jpg" alt="" loading="lazy">
         <span>${esc(v.titulo)}</span><em>${esc(v.canal)}</em></button>`).join("")
       : '<div class="sub">Sin videos. Tocá <b>Editar</b> y agregá canales.</div>';
-    acomodar();
     $("ytCanales").innerHTML = d.canales.map(c => `<span>${esc(c.nombre)}<button type="button" data-ytrm="${esc(c.id)}" aria-label="Quitar ${esc(c.nombre)}">✕</button></span>`).join("");
   }
   function cargarYT(forzar) {
@@ -613,20 +629,69 @@
 
   function guardar() { api("/api/estado", { paginas }).catch(() => {}); }
 
+  // ---------- Lienzo libre: mover y agrandar paneles ----------
+  // Cada panel guarda x, y, w, h como fracción del lienzo (0 a 1), así se adapta a cualquier pantalla.
+  const PASO = 16;                  // imán: los bordes caen cada 16 px
+  const MIN_W = 150, MIN_H = 100;   // tamaño mínimo de un panel, en px
+  const SPAN = { s: [1, 1], m: [2, 1], g: [2, 2] };
+  let altoRun = 0;                  // alto del lienzo fuera del modo edición
+  const lienzoTam = () => { const l = $("lienzo"); return { W: l.clientWidth, H: l.clientHeight }; };
+  // Chico / Ancho / Grande según cuánto ocupa (4 columnas × 3 filas de referencia)
+  function claseDe(p, W, H) {
+    const anch = p.w * W >= 1.5 * W / 4, alto = p.h * H >= 1.5 * H / 3;
+    return anch && alto ? "g" : anch ? "m" : "s";
+  }
+  function ubicar(el, p) {
+    el.style.left = p.x * 100 + "%"; el.style.top = p.y * 100 + "%";
+    el.style.width = p.w * 100 + "%"; el.style.height = p.h * 100 + "%";
+  }
+  function clases() {
+    if (!$("lienzo")) return;
+    const { W, H } = lienzoTam(); if (!W || !H) return;
+    $("lienzo").querySelectorAll(".mod").forEach(el => {
+      const p = actual()[Number(el.dataset.i)]; if (!p) return;
+      const t = claseDe(p, W, H);
+      if (t !== p.t || !el.classList.contains(t)) { el.classList.remove("s", "m", "g"); el.classList.add(t); p.t = t; }
+    });
+  }
+  // Los paneles sin lugar (página nueva, formato viejo, recién agregados) se acomodan en la grilla de 4 × 3
+  function empacar(lista) {
+    const libre = Array.from({ length: 3 }, () => Array(4).fill(true));
+    const G = 0.012, GV = 0.02;
+    lista.filter(p => p.x != null).forEach(p => {
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
+        const cx = (c + .5) / 4, cy = (r + .5) / 3;
+        if (cx > p.x && cx < p.x + p.w && cy > p.y && cy < p.y + p.h) libre[r][c] = false;
+      }
+    });
+    let cascada = 0;
+    lista.filter(p => p.x == null).forEach(p => {
+      const [sc, sr] = SPAN[p.t] || SPAN.s;
+      for (let r = 0; r + sr <= 3; r++) for (let c = 0; c + sc <= 4; c++) {
+        if (p.x != null) break;
+        let ok = true;
+        for (let i = 0; i < sr; i++) for (let j = 0; j < sc; j++) ok = ok && libre[r + i][c + j];
+        if (!ok) continue;
+        for (let i = 0; i < sr; i++) for (let j = 0; j < sc; j++) libre[r + i][c + j] = false;
+        Object.assign(p, { x: c / 4, y: r / 3, w: sc / 4 - G, h: sr / 3 - GV });
+      }
+      if (p.x == null) { const d = 0.03 * (cascada++ % 8); Object.assign(p, { x: d, y: d, w: 1 / 4 - G, h: 1 / 3 - GV }); }
+    });
+  }
+
   function renderModules() {
     const lista = actual();
-    $("modules").innerHTML = lista.length ? lista.map((p, i) => {
+    empacar(lista);
+    $("modules").innerHTML = `<div class="lienzo" id="lienzo">${lista.length ? lista.map((p, i) => {
       const m = MODS[p.k];
       return `<div class="mod ${p.t}" data-i="${i}" data-k="${p.k}">
         <h3>${p.t === "s" ? m.name : (m.title || m.name)}</h3>
-        <div class="edit-ctl">
-          <button type="button" data-mv="-1" aria-label="Mover ${m.name} antes" ${i === 0 ? "disabled" : ""}>◀</button>
-          <button type="button" data-mv="1" aria-label="Mover ${m.name} después" ${i === lista.length - 1 ? "disabled" : ""}>▶</button>
-          <button type="button" class="tam" data-tam aria-label="Cambiar tamaño de ${m.name}">${TAM_TXT[p.t]}</button>
-          <button type="button" class="rm" data-rm aria-label="Quitar ${m.name}">✕</button>
-        </div>
-        <div class="body">${m.html}</div></div>`;
-    }).join("") : '<div class="hint">Página vacía. Tocá <b>Editar</b> y agregá paneles.</div>';
+        <div class="edit-ctl"><button type="button" class="rm" data-rm aria-label="Quitar ${m.name}">✕</button></div>
+        <div class="body">${m.html}</div>
+        <span class="medida"></span><span class="tirador" aria-hidden="true"></span></div>`;
+    }).join("") : '<div class="hint">Página vacía. Tocá <b>Editar</b> y agregá paneles.</div>'}</div>`;
+    $("lienzo").style.setProperty("--paso", PASO + "px");
+    $("lienzo").querySelectorAll(".mod").forEach(el => ubicar(el, lista[Number(el.dataset.i)]));
 
     const off = Object.keys(MODS).filter(k => !lista.some(p => p.k === k));
     $("trayItems").innerHTML = off.length
@@ -650,30 +715,75 @@
     }
     if ($("ytLista")) cargarYT();
     tickReloj();
-    acomodar();
+    medirLienzo();
     if (ultimo) pintar(ultimo);
   }
-
-  // Si la página no entra en pantalla, los paneles que sobran pasan a la siguiente
-  function acomodar() {
-    if (editing || vista !== "run" || !ultimo) return;   // medir solo con datos y letras cargadas
-    document.fonts.ready.then(() => requestAnimationFrame(() => {
-      const box = $("modules");
-      const limite = box.clientHeight - 8;
-      const mods = [...box.querySelectorAll(".mod")];
-      if (mods.length < 2 || box.scrollHeight <= box.clientHeight + 2) return;
-      const sobran = mods.filter((m, i) => i > 0 && m.offsetTop + m.offsetHeight > limite)
-        .map(m => Number(m.dataset.i)).sort((a, b) => b - a);
-      if (!sobran.length) return;
-      const lista = actual();
-      const movidos = sobran.map(i => lista.splice(i, 1)[0]).reverse();
-      if (!paginas[pg + 1]) paginas.push({ paneles: [] });
-      const sig = paginas[pg + 1].paneles;
-      movidos.filter(p => !sig.some(q => q.k === p.k)).reverse().forEach(p => sig.unshift(p));
-      // No se guarda: es solo para esta pantalla. Tu diseño guardado no cambia.
-      renderModules();
-    }));
+  // En modo edición aparecen la bandeja amarilla y la barra de páginas: el lienzo mantiene
+  // sus medidas de siempre y se achica entero para entrar, así los paneles no cambian de lugar.
+  let escala = 1;
+  function medirLienzo() {
+    const lz = $("lienzo"); if (!lz) return;
+    escala = 1; lz.style.transform = "";
+    if (editing && altoRun) {
+      lz.style.height = altoRun + "px";
+      const box = $("modules"), libre = box.clientHeight - 36;
+      if (libre > 0 && libre < altoRun) { escala = libre / altoRun; lz.style.transform = `scale(${escala})`; }
+    } else { lz.style.height = ""; if (vista === "run" && lz.clientHeight) altoRun = lz.clientHeight; }
+    clases();
+    // El título corto o largo depende del tamaño
+    lz.querySelectorAll('.mod:not([data-k="amfbot"])').forEach(el => {
+      const m = MODS[el.dataset.k]; el.querySelector("h3").textContent = el.classList.contains("s") ? m.name : (m.title || m.name);
+    });
   }
+  window.addEventListener("resize", () => { if (vista === "run") medirLienzo(); });
+
+  // Arrastrar para mover, tirador de la esquina para agrandar. Anda con mouse y con el dedo.
+  let arrastre = null;
+  const TAM_TXT = { s: "Chico", m: "Ancho", g: "Grande" };
+  $("modules").addEventListener("pointerdown", (e) => {
+    if (!editing || e.button > 0) return;
+    const el = e.target.closest(".mod"); if (!el) return;
+    const tirar = !!e.target.closest(".tirador");
+    if (!tirar && e.target.closest("button, input, textarea, .cfg")) return;
+    const p = actual()[Number(el.dataset.i)]; if (!p) return;
+    const { W, H } = lienzoTam();
+    arrastre = { el, p, tirar, W, H, id: e.pointerId, x0: e.clientX, y0: e.clientY,
+      r: { x: p.x * W, y: p.y * H, w: p.w * W, h: p.h * H }, nuevo: null };
+    el.classList.add("agarrado");
+    el.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  document.addEventListener("pointermove", (e) => {
+    const a = arrastre; if (!a || e.pointerId !== a.id) return;
+    const dx = (e.clientX - a.x0) / escala, dy = (e.clientY - a.y0) / escala;
+    const im = v => Math.round(v / PASO) * PASO;
+    let { x, y, w, h } = a.r;
+    if (a.tirar) {
+      w = Math.min(Math.max(MIN_W, im(x + w + dx) - x), a.W - x);
+      h = Math.min(Math.max(MIN_H, im(y + h + dy) - y), a.H - y);
+    } else {
+      x = Math.min(Math.max(0, im(x + dx)), a.W - w);
+      y = Math.min(Math.max(0, im(y + dy)), a.H - h);
+    }
+    a.nuevo = { x: x / a.W, y: y / a.H, w: w / a.W, h: h / a.H };
+    ubicar(a.el, a.nuevo);
+    const t = claseDe(a.nuevo, a.W, a.H);
+    if (!a.el.classList.contains(t)) { a.el.classList.remove("s", "m", "g"); a.el.classList.add(t); }
+    a.el.querySelector(".medida").textContent = a.tirar ? `${TAM_TXT[t]} · ${Math.round(w)} × ${Math.round(h)}` : TAM_TXT[t];
+  });
+  function soltar(e) {
+    const a = arrastre; if (!a || e.pointerId !== a.id) return;
+    arrastre = null;
+    a.el.classList.remove("agarrado");
+    if (!a.nuevo) return;
+    const r4 = v => Math.round(v * 10000) / 10000;
+    Object.keys(a.nuevo).forEach(k => { a.p[k] = r4(a.nuevo[k]); });
+    // El último que tocaste queda arriba de los demás
+    const lista = actual(); lista.push(lista.splice(lista.indexOf(a.p), 1)[0]);
+    renderModules(); guardar();
+  }
+  document.addEventListener("pointerup", soltar);
+  document.addEventListener("pointercancel", soltar);
 
   function irA(n) {
     pg = (n + paginas.length) % paginas.length;
@@ -702,8 +812,6 @@
     const b = e.target.closest(".edit-ctl button"); if (!b) return;
     const lista = actual(), i = Number(b.closest(".mod").dataset.i);
     if (b.hasAttribute("data-rm")) lista.splice(i, 1);
-    else if (b.hasAttribute("data-tam")) lista[i].t = TAM[(TAM.indexOf(lista[i].t) + 1) % TAM.length];
-    else if (b.dataset.mv) { const j = i + Number(b.dataset.mv); [lista[i], lista[j]] = [lista[j], lista[i]]; }
     renderModules(); guardar();
   });
   $("trayItems").addEventListener("click", (e) => {
@@ -1162,7 +1270,6 @@
     drawSpark();
   }
 
-  let yaAcomodado = false;
   function actualizar() {
     api("/api/datos").then(d => {
       $("offline").hidden = true;
@@ -1170,14 +1277,19 @@
       if (d.temp != null) { temps.push(d.temp); if (temps.length > 60) temps.shift(); }
       cpuHist.push(d.cpu); if (cpuHist.length > 60) cpuHist.shift();
       pintar(d);
-      if (!yaAcomodado) { yaAcomodado = true; acomodar(); }
     }).catch(() => { $("offline").hidden = false; });
   }
 
   api("/api/estado").then(e => {
     const limpiar = (lista) => lista
       .filter(p => p && MODS[p.k])
-      .map(p => ({ k: p.k, t: TAM.includes(p.t) ? p.t : "s" }));
+      .map(p => {
+        const q = { k: p.k, t: TAM.includes(p.t) ? p.t : "s" };
+        const n = ["x", "y", "w", "h"].map(c => p[c]);
+        if (n.every(v => typeof v === "number" && v >= 0 && v <= 1) && n[2] > 0.02 && n[3] > 0.02)
+          Object.assign(q, { x: Math.min(n[0], 1 - n[2]), y: Math.min(n[1], 1 - n[3]), w: n[2], h: n[3] });
+        return q;
+      });
     if (Array.isArray(e.paginas) && e.paginas.length) {
       paginas = e.paginas.map(x => ({ paneles: limpiar((x && x.paneles) || []) }));
     } else if (Array.isArray(e.paneles)) {

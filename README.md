@@ -28,11 +28,11 @@ pantalla táctil.
 - **Apps GTK** (el selector de archivos al descargar o guardar, el control de volumen, etc.) con barra de título
   verde, lo seleccionado en amarillo y el botón de confirmar resaltado.
 - **Pantalla de inicio** (`Super+G`), pensada para el dedo:
-  - **Páginas de trabajo** con paneles de 3 tamaños (Chico, Ancho, Grande), que se editan como en el monitor:
+  - **Páginas de trabajo** con paneles libres: en **Editar** los arrastrás a donde quieras y los agrandás
+    desde la esquina amarilla (con el dedo o el mouse). Según el tamaño muestran más o menos detalle:
     batería (salud, temperatura, consumo), procesador, memoria, datos usados por día (para cuidar el hotspot),
     temperaturas, wifi, **Bluetooth** (prender/apagar, conectar tus aparatos, ver su batería y vincular nuevos), disco, reloj, música sonando (YouTube / YouTube Music), mapa, últimos videos de YouTube,
     notas y el estado de un bot que corre en otro equipo por SSH.
-  - Si una página no entra en la pantalla, lo que sobra pasa solo a la siguiente.
   - **Menú de apps** estilo G5: Favoritas, Todas las apps y Sistema (apagar y reiniciar piden dos toques).
   - Modo **día** y **noche** (el cambio se funde suave), y un **bip** al tocar los botones, como el monitor.
 - Fondo de pantalla y pantalla de bloqueo con fotos propias de una S770 en cosecha.
