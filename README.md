@@ -18,8 +18,8 @@ pantalla táctil.
 |---|---|
 | ![Reloj, música, notas, mapa y YouTube](capturas/2-reloj-musica-mapa-youtube.png) | ![Menú de apps](capturas/3-menu-de-apps.png) |
 | Segunda página: reloj, música, notas, mapa y últimos videos | Menú de apps estilo G5 |
-| ![Modo día](capturas/4-modo-dia.png) | |
-| Modo día | |
+| ![Modo día](capturas/4-modo-dia.png) | ![Panel de Bluetooth](capturas/5-bluetooth.png) |
+| Modo día | Panel de Bluetooth: prender, conectar y vincular con el dedo |
 
 ## Qué trae
 
@@ -30,11 +30,11 @@ pantalla táctil.
 - **Pantalla de inicio** (`Super+G`), pensada para el dedo:
   - **Páginas de trabajo** con paneles de 3 tamaños (Chico, Ancho, Grande), que se editan como en el monitor:
     batería (salud, temperatura, consumo), procesador, memoria, datos usados por día (para cuidar el hotspot),
-    temperaturas, wifi, disco, reloj, música sonando (YouTube / YouTube Music), mapa, últimos videos de YouTube,
+    temperaturas, wifi, **Bluetooth** (prender/apagar, conectar tus aparatos, ver su batería y vincular nuevos), disco, reloj, música sonando (YouTube / YouTube Music), mapa, últimos videos de YouTube,
     notas y el estado de un bot que corre en otro equipo por SSH.
   - Si una página no entra en la pantalla, lo que sobra pasa solo a la siguiente.
   - **Menú de apps** estilo G5: Favoritas, Todas las apps y Sistema (apagar y reiniciar piden dos toques).
-  - Modo **día** y **noche**, y un **bip** al tocar los botones, como el monitor.
+  - Modo **día** y **noche** (el cambio se funde suave), y un **bip** al tocar los botones, como el monitor.
 - Fondo de pantalla y pantalla de bloqueo con fotos propias de una S770 en cosecha.
 
 ## Requisitos
