@@ -71,7 +71,7 @@
 }
 
 /* La carga del internet va pegada al wifi, como un solo bloque */
-#custom-carga-red {
+#image.carga-red {
     padding: 0 10px 0 2px;
     font-size: 13px;
 }

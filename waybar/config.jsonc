@@ -16,7 +16,7 @@
     "modules-right": [
         "pulseaudio",
         "network",
-        "custom/carga-red",
+        "image#carga-red",
         "memory",
         "cpu",
         "temperature",
@@ -36,11 +36,11 @@
         "tooltip-format": "{ifname}: {ipaddr}/{cidr}"
     },
 
-    // Carga del internet: barrita al lado del wifi, como la carga del motor en la G5
-    "custom/carga-red": {
+    // Carga del internet: rampa al lado del wifi, como la carga del motor de la cosechadora
+    "image#carga-red": {
         "exec": "~/.config/g5/waybar/carga-red.py",
-        "return-type": "json",
-        "restart-interval": 10,
+        "interval": 1,
+        "size": 112,
         "tooltip": true
     },
 

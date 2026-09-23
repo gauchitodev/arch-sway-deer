@@ -153,6 +153,26 @@
   .gauge i.warn { background: var(--warn); }
   .gauge i.crit { background: var(--crit); }
   .bars { display: flex; align-items: flex-end; gap: 6px; height: 48px; }
+  /* Wifi + carga del internet (rampa como la carga del motor de la cosechadora) */
+  .wifi-cab { display: flex; align-items: flex-end; gap: 16px; min-width: 0; }
+  .wifi-txt { display: grid; gap: 2px; min-width: 0; }
+  .wifi-txt > b { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mod.s .wifi-txt > b { display: none; }
+  .carga { display: grid; gap: 6px; }
+  .carga-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  .carga-cab b { font-size: 30px; color: var(--ink); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .carga-cab b small { font-size: 15px; color: var(--muted); margin-left: 2px; }
+  .carga-cab b.media { color: var(--warn); }
+  .carga-cab b.alta { color: var(--crit); }
+  .mod.g .carga-cab b { font-size: 56px; }
+  .rampa { width: 100%; max-height: 90px; aspect-ratio: 5 / 1; display: block; }
+  .mod.g .rampa { max-height: 140px; }
+  .r-vacio { fill: var(--bar-off); }
+  .r-verde { fill: var(--green-bright); }
+  .r-amar { fill: var(--yellow); }
+  .r-rojo { fill: var(--crit); }
+  #cargaLleno { transition: width .8s ease-out; }
+  .mod.s #cargaVel { display: none; }
   .bars i { width: 14px; background: var(--bar-off); border-radius: 1px; }
   .bars i.on { background: var(--green); }
   .spark { width: 100%; height: 50px; display: block; }
@@ -544,7 +564,19 @@
              <div class="det">
                <div class="fila"><span>Placa de video</span><b id="tempGpu">—</b></div>
                <div class="fila"><span>Disco (SSD)</span><b id="tempSsd">—</b></div></div>` },
-    wifi:   { name: "Señal wifi", html: `<div class="bars" id="wifiBars"><i style="height:25%"></i><i style="height:50%"></i><i style="height:75%"></i><i style="height:100%"></i></div><div class="sub"><b id="dbm">—</b> dBm</div>` },
+    wifi:   { name: "Señal wifi", title: "Wifi · señal y carga", html: `<div class="wifi-cab"><div class="bars" id="wifiBars"><i style="height:25%"></i><i style="height:50%"></i><i style="height:75%"></i><i style="height:100%"></i></div>
+               <div class="wifi-txt"><b id="wifiRed">—</b><div class="sub"><b id="dbm">—</b> dBm</div></div></div>
+             <div class="carga">
+               <div class="carga-cab"><span>Carga del internet</span><b id="cargaPct">0<small>%</small></b></div>
+               <svg class="rampa" viewBox="0 0 250 50" aria-hidden="true">
+                 <defs><clipPath id="rampaTri"><polygon points="0,50 250,50 250,0"/></clipPath>
+                   <clipPath id="rampaLleno"><rect id="cargaLleno" x="0" y="0" width="0" height="50"/></clipPath></defs>
+                 <polygon class="r-vacio" points="0,50 250,50 250,0"/>
+                 <g clip-path="url(#rampaTri)"><g clip-path="url(#rampaLleno)">
+                   <rect class="r-verde" x="0" y="0" width="150" height="50"/><rect class="r-amar" x="150" y="0" width="62.5" height="50"/><rect class="r-rojo" x="212.5" y="0" width="38" height="50"/>
+                 </g></g>
+               </svg>
+               <div class="sub" id="cargaVel">↓ — · ↑ —</div></div>` },
     net:    { name: "Datos usados", html: `<div class="big"><span id="net">—</span><small>MB hoy</small></div><div class="sub" id="netVel">—</div>
              <div class="det"><div class="semana" id="netSemana"></div>
                <div class="fila"><span>Desde que prendiste</span><b id="netBoot">—</b></div></div>` },
@@ -702,6 +734,7 @@
     api("/api/musica", { accion: "ir", seg }).catch(() => {});
   });
 
+  let cargaPico = 1;   // Mbps, para la rampa de carga del internet
   function guardar() { api("/api/estado", { paginas }).catch(() => {}); }
 
   // ---------- Lienzo libre: mover y agrandar paneles ----------
@@ -1262,6 +1295,21 @@
     set("dbm", r.dbm != null ? "−" + Math.abs(r.dbm) : "—");
     const on = r.dbm == null ? 0 : r.dbm > -55 ? 4 : r.dbm > -65 ? 3 : r.dbm > -75 ? 2 : 1;
     document.querySelectorAll("#wifiBars i").forEach((x, i) => x.classList.toggle("on", i < on));
+    set("wifiRed", r.ssid || "Sin conexión");
+    // Carga del internet: 100 % = la mayor velocidad vista hace poco (se va olvidando), mínimo 1 Mbps
+    const ur = d.uso_red;
+    if (ur) {
+      const total = (ur.bajada || 0) + (ur.subida || 0);
+      cargaPico = Math.max(1, total, cargaPico * 0.99);
+      const pct = Math.min(100, Math.round(100 * total / cargaPico));
+      const pb = $("cargaPct");
+      if (pb) {
+        pb.innerHTML = `${pct}<small>%</small>`;
+        pb.className = pct > 85 ? "alta" : pct > 60 ? "media" : "";
+        $("cargaLleno").style.width = (250 * pct / 100) + "px";
+        set("cargaVel", `↓ ${ur.bajada.toFixed(1)} Mbps · ↑ ${ur.subida.toFixed(1)} Mbps · tope ${cargaPico.toFixed(1)} Mbps`);
+      }
+    }
     set("net", r.mb.toLocaleString("es-UY"));
     set("ssid", r.ssid || "Sin conexión");
     set("disk", d.disco.pct); lvl("diskG", d.disco.pct, 80, 92); set("diskSub", `${d.disco.libre} GB libres de ${d.disco.total} GB`);
