@@ -222,6 +222,16 @@
   .bot-luz.mal { background: var(--crit); box-shadow: 0 0 0 5px rgba(200, 50, 43, .25); }
   .bot-luz.duda { background: var(--warn); }
   .bot-txt { font-size: 30px; font-weight: 800; line-height: 1.1; }
+  .bt-cab { display: flex; align-items: center; gap: 14px; }
+  .bt-cab .chip { margin-left: auto; }
+  .bt-lista .fila { align-items: center; }
+  .bt-lista .fila span { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bt-lista .fila em { font-style: normal; color: var(--muted); font-size: 13px; margin-left: 6px; }
+  .bt-lista .fila .chip { min-height: 40px; flex: none; }
+  .bt-lista .fila .chip.on { background: var(--green); color: #fff; border-color: var(--green-deep); }
+  .bt-lista h4 { margin: 6px 0 0; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .mod.s .bt-lista, .mod.s .bt-pie { display: none; }
+  .bt-pie { display: flex; gap: 8px; }
   .mod.g .bot-luz { width: 48px; height: 48px; }
   .mod.g .bot-txt { font-size: 52px; }
   .notas {
@@ -491,6 +501,10 @@
     up:     { name: "Encendida", html: `<div class="big"><span id="up">—</span><small>h</small></div><div class="sub">Desde el último arranque</div>` },
     win:    { name: "Ventanas", html: `<div class="big"><span id="win">—</span></div><div class="sub" id="winSub">—</div>` },
     bright: { name: "Brillo", html: `<div class="big"><span id="bright">—</span><small>%</small></div><div class="gauge"><i id="brightG"></i></div>` },
+    bt:     { name: "Bluetooth", html: `<div class="bt-cab"><span class="bot-luz" id="btLuz"></span><span class="bot-txt" id="btTxt">—</span>
+               <button type="button" class="chip" id="btPower">—</button></div><div class="sub" id="btSub">—</div>
+             <div class="det bt-lista" id="btLista"></div>
+             <div class="bt-pie"><button type="button" class="chip" data-bt="buscar" id="btBuscar">Buscar nuevos</button></div>` },
     amfbot: { name: "Bot", html: `<div class="bot"><span class="bot-luz" id="botLuz"></span><span class="bot-txt" id="botTxt">Revisando…</span></div><div class="sub" id="botSub">—</div>` },
     reloj:  { name: "Reloj", html: `<div class="reloj"><span id="relojHora">--:--</span><small id="relojSeg">00</small></div><div class="sub fecha" id="relojFecha">—</div>` },
     musica: { name: "Música", title: "Sonando ahora", html: `<div class="mus">
@@ -518,7 +532,8 @@
     ["temp", "m"], ["wifi", "s"], ["disk", "s"]
   ].map(([k, t]) => ({ k, t })) }, { paneles: [
     ["reloj", "s"], ["musica", "m"], ["notas", "s"],
-    ["mapa", "g"], ["youtube", "g"]
+    ["mapa", "g"], ["youtube", "g"],
+    ["bt", "m"]
   ].map(([k, t]) => ({ k, t })) }];
   let paginas = DEFAULT();
   let pg = 0;
@@ -584,6 +599,11 @@
         .then(r => { if (r.error) throw 0; $("ytInput").value = ""; cargarYT(true); })
         .catch(() => { $("ytInput").value = ""; $("ytInput").placeholder = "No encontré ese canal, probá de nuevo"; })
         .finally(() => { b.textContent = "Agregar canal"; });
+      return;
+    }
+    if (b.id === "btPower" && !editing) { b.dataset.bt = b.dataset.que; }
+    if (b.dataset.bt && !editing) {
+      api("/api/bluetooth", { que: b.dataset.bt, mac: b.dataset.mac || null }).then(actualizar).catch(() => {});
       return;
     }
     if (b.dataset.ytrm) { api("/api/yt/quitar", { id: b.dataset.ytrm }).then(() => cargarYT(true)).catch(() => {}); }
@@ -1080,6 +1100,43 @@
       if (bot.estado === "sin_conexion") sub = `No encuentro ${bot.dispositivo} en la red`;
       if (bot.revisado) sub += ` · ${bot.revisado}`;
       set("botSub", sub);
+    }
+
+    // Bluetooth
+    const bt = d.bluetooth || {};
+    if ($("btLuz")) {
+      const tr = bt.trabajo || {};
+      const ocupado = !!tr.que;
+      const con = (bt.dispositivos || []).filter(x => x.conectado);
+      $("btLuz").className = "bot-luz " + (!bt.hay ? "mal" : bt.prendido ? (con.length ? "ok" : "duda") : "");
+      set("btTxt", !bt.hay ? "Sin placa" : bt.prendido ? "Prendido" : "Apagado");
+      const pw = $("btPower");
+      pw.hidden = !bt.hay;
+      pw.dataset.que = bt.prendido ? "apagar" : "prender";
+      pw.textContent = bt.prendido ? "Apagar" : "Prender";
+      pw.disabled = ocupado;
+      const HACIENDO = { prender: "Prendiendo…", apagar: "Apagando…", buscar: "Buscando aparatos cerca…",
+                         conectar: "Conectando…", desconectar: "Desconectando…", vincular: "Vinculando…", olvidar: "Olvidando…" };
+      const FALLO = { conectar: "No se pudo conectar: ¿está prendido y cerca?", vincular: "No se pudo vincular: ponelo en modo emparejar",
+                      buscar: "No se pudo buscar", prender: "No se pudo prender", apagar: "No se pudo apagar",
+                      desconectar: "No se pudo desconectar", olvidar: "No se pudo olvidar" };
+      let sub = !bt.hay ? "La laptop no ve el Bluetooth"
+        : !bt.prendido ? "Tocá Prender para usarlo"
+        : con.length ? "Conectado a " + con.map(x => x.nombre + (x.bateria != null ? ` (${x.bateria}%)` : "")).join(", ")
+        : "Nada conectado";
+      if (ocupado) sub = HACIENDO[tr.que] || sub;
+      else if (tr.error) sub = FALLO[tr.error] || sub;
+      set("btSub", sub);
+      const lista = $("btLista"), pie = $("btBuscar");
+      pie.disabled = ocupado || !bt.prendido;
+      pie.textContent = tr.que === "buscar" ? "Buscando…" : "Buscar nuevos";
+      const fila = (x, que, txt, on) => `<div class="fila"><span>${esc(x.nombre)}${x.bateria != null ? `<em>${x.bateria}%</em>` : ""}</span>
+        <button type="button" class="chip${on ? " on" : ""}" data-bt="${que}" data-mac="${esc(x.mac)}" ${ocupado || !bt.prendido ? "disabled" : ""}>${
+          tr.mac === x.mac ? "…" : txt}</button></div>`;
+      let html = (bt.dispositivos || []).map(x => x.conectado ? fila(x, "desconectar", "Conectado", true) : fila(x, "conectar", "Conectar")).join("");
+      if (!html && bt.prendido) html = '<div class="sub">Todavía no vinculaste nada. Poné el aparato en modo emparejar y tocá <b>Buscar nuevos</b>.</div>';
+      if (bt.prendido && (bt.encontrados || []).length) html += "<h4>Encontrados cerca</h4>" + bt.encontrados.map(x => fila(x, "vincular", "Vincular")).join("");
+      if (lista.dataset.html !== html) { lista.dataset.html = html; lista.innerHTML = html; }
     }
 
     // Estado general

@@ -388,6 +388,94 @@ def yt_videos(canales):
     return _yt_cache["videos"]
 
 
+# ---------- Bluetooth (con bluetoothctl) ----------
+
+MAC = re.compile(r"([0-9A-F]{2}(?::[0-9A-F]{2}){5})")
+_bt_cache = {"t": 0, "datos": None}
+_bt_trabajo = {"que": None, "mac": None, "error": None}   # lo que se está haciendo ahora (tarda unos segundos)
+
+
+def _bt_lista(*filtro):
+    """Devuelve {mac: nombre} de `bluetoothctl devices [Paired|Connected]`."""
+    lista = {}
+    for linea in correr(["bluetoothctl", "devices", *filtro], timeout=3).splitlines():
+        partes = linea.split(" ", 2)
+        if len(partes) == 3 and partes[0] == "Device" and MAC.fullmatch(partes[1]):
+            lista[partes[1]] = partes[2].strip()
+    return lista
+
+
+def bluetooth():
+    if DEMO:
+        return {"hay": True, "prendido": True, "trabajo": dict(_bt_trabajo), "encontrados": [],
+                "dispositivos": [{"mac": "00:00:00:00:00:01", "nombre": "Auriculares", "conectado": True, "bateria": 80},
+                                 {"mac": "00:00:00:00:00:02", "nombre": "Parlante", "conectado": False, "bateria": None}]}
+    if time.time() - _bt_cache["t"] > 4 or _bt_cache["datos"] is None:
+        show = correr(["bluetoothctl", "show"], timeout=3)
+        if "Controller" not in show:
+            datos = {"hay": False}
+        else:
+            vinculados = _bt_lista("Paired")
+            conectados = _bt_lista("Connected")
+            dispositivos = []
+            for mac, nombre in vinculados.items():
+                bateria = None
+                if mac in conectados:
+                    m = re.search(r"Battery Percentage:.*\((\d+)\)", correr(["bluetoothctl", "info", mac], timeout=3))
+                    bateria = int(m.group(1)) if m else None
+                dispositivos.append({"mac": mac, "nombre": nombre, "conectado": mac in conectados, "bateria": bateria})
+            dispositivos.sort(key=lambda x: (not x["conectado"], x["nombre"].lower()))
+            # Encontrados al buscar: los que no están vinculados y tienen nombre de verdad
+            encontrados = [{"mac": m, "nombre": n} for m, n in _bt_lista().items()
+                           if m not in vinculados and n.replace("-", ":") != m]
+            datos = {"hay": True, "prendido": "Powered: yes" in show,
+                     "dispositivos": dispositivos, "encontrados": encontrados[:8]}
+        _bt_cache.update(t=time.time(), datos=datos)
+    return dict(_bt_cache["datos"], trabajo=dict(_bt_trabajo))
+
+
+def _bt_hacer(que, mac):
+    """Corre la acción en un hilo aparte: conectar o vincular puede tardar 10 segundos."""
+    pasos = {
+        "prender": [["power", "on"]],
+        "apagar": [["power", "off"]],
+        "buscar": [["--timeout", "12", "scan", "on"]],
+        "conectar": [["connect", mac]],
+        "desconectar": [["disconnect", mac]],
+        "vincular": [["pair", mac], ["trust", mac], ["connect", mac]],
+        "olvidar": [["remove", mac]],
+    }[que]
+    _bt_trabajo.update(que=que, mac=mac, error=None)
+    for p in pasos:
+        try:
+            r = subprocess.run(["bluetoothctl", *p], capture_output=True, text=True, timeout=30)
+            salida = r.stdout + r.stderr
+        except (OSError, subprocess.SubprocessError):
+            salida, r = "", None
+        if r is None or r.returncode != 0 or re.search(r"Failed|not available|Error", salida):
+            _bt_trabajo["error"] = que
+            break
+    _bt_trabajo.update(que=None, mac=None)
+    _bt_cache["t"] = 0
+
+
+def bt_accion(que, mac):
+    if _bt_trabajo["que"] or DEMO:
+        return False
+    if que in ("conectar", "desconectar", "olvidar"):
+        if mac not in _bt_lista("Paired"):
+            return False
+    elif que == "vincular":
+        if not MAC.fullmatch(str(mac)) or mac not in _bt_lista():
+            return False
+    elif que in ("prender", "apagar", "buscar"):
+        mac = None
+    else:
+        return False
+    threading.Thread(target=_bt_hacer, args=(que, mac), daemon=True).start()
+    return True
+
+
 _sway_cache = {"t": 0, "ventanas": 0, "escritorios": 0}
 
 
@@ -468,6 +556,7 @@ def datos():
         "volumen": volumen(),
         "sway": ventanas(),
         "amfbot": dict(_amfbot),
+        "bluetooth": bluetooth(),
         "encendida_min": round(float(leer("/proc/uptime", "0").split()[0]) / 60),
         "equipo": socket.gethostname(),
         "kernel": os.uname().release,
@@ -723,6 +812,9 @@ class Manejador(BaseHTTPRequestHandler):
                 json.dump(e, f, indent=2)
             _yt_cache["t"] = 0
             return self._responder(200, {"ok": True})
+        if self.path == "/api/bluetooth":
+            ok = bt_accion(cuerpo.get("que"), cuerpo.get("mac"))
+            return self._responder(200 if ok else 409, {"ok": ok})
         if self.path == "/api/lanzar" and cuerpo.get("que") in LANZADORES:
             lanzar(cuerpo["que"])
             return self._responder(200, {"ok": True})
