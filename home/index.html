@@ -378,6 +378,8 @@
 
   @media (max-width: 1100px) { .modules { grid-template-columns: repeat(3, 1fr); } }
   @media (prefers-reduced-motion: reduce) { .gauge i { transition: none; } }
+  /* Cambio día/noche: toda la pantalla se funde de un modo al otro */
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .8s; animation-timing-function: ease-in-out; }
 </style>
 </head>
 <body>
@@ -963,8 +965,13 @@
   const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>Día';
   const MOON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Noche';
   function setMode(m, save) {
-    document.documentElement.dataset.mode = m;
-    $("modeBtn").innerHTML = m === "noche" ? SUN : MOON;
+    const cambiar = () => {
+      document.documentElement.dataset.mode = m;
+      $("modeBtn").innerHTML = m === "noche" ? SUN : MOON;
+    };
+    // Al tocar el botón se funde suave; al abrir la pantalla, directo
+    const suave = save && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (suave) document.startViewTransition(cambiar); else cambiar();
     if (save) api("/api/estado", { modo: m }).catch(() => {});
   }
   $("modeBtn").addEventListener("click", () =>
@@ -1116,10 +1123,10 @@
       pw.textContent = bt.prendido ? "Apagar" : "Prender";
       pw.disabled = ocupado;
       const HACIENDO = { prender: "Prendiendo…", apagar: "Apagando…", buscar: "Buscando aparatos cerca…",
-                         conectar: "Conectando…", desconectar: "Desconectando…", vincular: "Vinculando…", olvidar: "Olvidando…" };
+                         conectar: "Conectando…", desconectar: "Desconectando…", vincular: "Vinculando…" };
       const FALLO = { conectar: "No se pudo conectar: ¿está prendido y cerca?", vincular: "No se pudo vincular: ponelo en modo emparejar",
                       buscar: "No se pudo buscar", prender: "No se pudo prender", apagar: "No se pudo apagar",
-                      desconectar: "No se pudo desconectar", olvidar: "No se pudo olvidar" };
+                      desconectar: "No se pudo desconectar" };
       let sub = !bt.hay ? "La laptop no ve el Bluetooth"
         : !bt.prendido ? "Tocá Prender para usarlo"
         : con.length ? "Conectado a " + con.map(x => x.nombre + (x.bateria != null ? ` (${x.bateria}%)` : "")).join(", ")

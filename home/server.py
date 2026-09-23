@@ -393,11 +393,13 @@ def yt_videos(canales):
 MAC = re.compile(r"([0-9A-F]{2}(?::[0-9A-F]{2}){5})")
 _bt_cache = {"t": 0, "datos": None}
 _bt_trabajo = {"que": None, "mac": None, "error": None}   # lo que se está haciendo ahora (tarda unos segundos)
+_bt_candado = threading.Lock()
 
 
 def _bt_lista(*filtro):
     """Devuelve {mac: nombre} de `bluetoothctl devices [Paired|Connected]`."""
     lista = {}
+    filtro = [f for f in filtro if f]
     for linea in correr(["bluetoothctl", "devices", *filtro], timeout=3).splitlines():
         partes = linea.split(" ", 2)
         if len(partes) == 3 and partes[0] == "Device" and MAC.fullmatch(partes[1]):
@@ -443,16 +445,15 @@ def _bt_hacer(que, mac):
         "conectar": [["connect", mac]],
         "desconectar": [["disconnect", mac]],
         "vincular": [["pair", mac], ["trust", mac], ["connect", mac]],
-        "olvidar": [["remove", mac]],
     }[que]
-    _bt_trabajo.update(que=que, mac=mac, error=None)
     for p in pasos:
         try:
             r = subprocess.run(["bluetoothctl", *p], capture_output=True, text=True, timeout=30)
             salida = r.stdout + r.stderr
         except (OSError, subprocess.SubprocessError):
             salida, r = "", None
-        if r is None or r.returncode != 0 or re.search(r"Failed|not available|Error", salida):
+        # Ojo: no buscar "Error" suelto, el nombre de un aparato cercano podría contenerlo
+        if r is None or r.returncode != 0 or re.search(r"^Failed|org\.bluez\.Error|not available", salida, re.M):
             _bt_trabajo["error"] = que
             break
     _bt_trabajo.update(que=None, mac=None)
@@ -460,18 +461,19 @@ def _bt_hacer(que, mac):
 
 
 def bt_accion(que, mac):
-    if _bt_trabajo["que"] or DEMO:
+    """Valida el pedido de la página: solo MACs que bluetoothctl ya conoce."""
+    if DEMO or que not in ("prender", "apagar", "buscar", "conectar", "desconectar", "vincular"):
         return False
-    if que in ("conectar", "desconectar", "olvidar"):
-        if mac not in _bt_lista("Paired"):
-            return False
-    elif que == "vincular":
-        if not MAC.fullmatch(str(mac)) or mac not in _bt_lista():
-            return False
-    elif que in ("prender", "apagar", "buscar"):
+    if que in ("prender", "apagar", "buscar"):
         mac = None
-    else:
+    elif not isinstance(mac, str) or not MAC.fullmatch(mac):
         return False
+    elif mac not in _bt_lista("Paired" if que != "vincular" else None):
+        return False
+    with _bt_candado:
+        if _bt_trabajo["que"]:
+            return False
+        _bt_trabajo.update(que=que, mac=mac, error=None)
     threading.Thread(target=_bt_hacer, args=(que, mac), daemon=True).start()
     return True
 
@@ -777,10 +779,17 @@ class Manejador(BaseHTTPRequestHandler):
     def do_POST(self):
         if not (self._host_ok() and self._token_ok()):
             return self._responder(403, {"error": "no autorizado"})
-        largo = min(int(self.headers.get("Content-Length", 0)), 200000)
+        try:
+            largo = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            largo = -1
+        if not 0 <= largo <= 200000:
+            return self._responder(413, {"error": "tamaño"})
         try:
             cuerpo = json.loads(self.rfile.read(largo) or "{}")
         except ValueError:
+            return self._responder(400, {"error": "json"})
+        if not isinstance(cuerpo, dict):
             return self._responder(400, {"error": "json"})
         if self.path == "/api/lanzar" and str(cuerpo.get("que", "")).startswith("app:"):
             ok = lanzar_app(cuerpo["que"][4:])
