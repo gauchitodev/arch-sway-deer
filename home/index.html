@@ -91,7 +91,7 @@
   .run { grid-row: 3; display: grid; grid-template-columns: 1fr 270px; min-height: 0; }
   .modules { padding: 18px; overflow: hidden; position: relative; min-height: 0; }
   /* Lienzo libre: cada panel guarda su lugar y tamaño en fracciones del lienzo */
-  .lienzo { position: relative; height: 100%; transform-origin: top center; }
+  .lienzo { position: relative; height: 100%; transform-origin: top center; touch-action: pan-y; }
   .editing .lienzo {
     background-image: radial-gradient(circle, rgba(255, 222, 0, .45) 1.2px, transparent 1.6px);
     background-size: var(--paso, 16px) var(--paso, 16px);
@@ -790,23 +790,71 @@
     desarmarBorrar();
     renderModules();
   }
-  $("pgPrev").addEventListener("click", () => irA(pg - 1));
+  $("pgPrev").addEventListener("click", () => deslizarA(-1));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && vista === "menu") mostrar("run"); });
-  $("pgNext").addEventListener("click", () => irA(pg + 1));
+  $("pgNext").addEventListener("click", () => deslizarA(1));
   document.addEventListener("keydown", (e) => {
     if (vista !== "run" || ["TEXTAREA", "INPUT"].includes(e.target.tagName)) return;
-    if (e.key === "ArrowLeft") irA(pg - 1);
-    if (e.key === "ArrowRight") irA(pg + 1);
+    if (e.key === "ArrowLeft") deslizarA(-1);
+    if (e.key === "ArrowRight") deslizarA(1);
   });
-  // Deslizar con el dedo para cambiar de página
-  let toque = null;
-  $("modules").addEventListener("pointerdown", (e) => { toque = { x: e.clientX, y: e.clientY }; });
-  $("modules").addEventListener("pointerup", (e) => {
-    if (!toque || editing || paginas.length < 2) return;
+  // Deslizar para cambiar de página: la página sigue al dedo (o al mouse) y al soltar
+  // pasa a la siguiente si la corriste lo suficiente o la tiraste rápido.
+  let toque = null, pasando = false;
+  const quieto = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function deslizarA(dir) {
+    // dir 1 = siguiente, -1 = anterior. La vieja sale por un lado y la nueva entra por el otro.
+    const lz = $("lienzo"); if (!lz || pasando) return;
+    if (quieto()) { irA(pg + dir); return; }
+    pasando = true;
+    const W = $("modules").clientWidth;
+    const sale = lz.animate([{ transform: getComputedStyle(lz).transform === "none" ? "none" : getComputedStyle(lz).transform },
+      { transform: `translateX(${-dir * W}px)`, opacity: .3 }], { duration: 180, easing: "ease-in", fill: "forwards" });
+    sale.onfinish = () => {
+      irA(pg + dir);
+      const nueva = $("lienzo");
+      nueva.animate([{ transform: `translateX(${dir * W}px)`, opacity: .3 }, { transform: "none", opacity: 1 }],
+        { duration: 220, easing: "ease-out" }).onfinish = () => { pasando = false; };
+    };
+  }
+  $("modules").addEventListener("pointerdown", (e) => {
+    if (editing || paginas.length < 2 || pasando || e.button > 0) return;
+    if (e.target.closest("button, input, textarea, iframe, .yt, .cfg")) return;
+    toque = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId, horiz: null };
+  });
+  $("modules").addEventListener("pointermove", (e) => {
+    if (!toque || e.pointerId !== toque.id) return;
     const dx = e.clientX - toque.x, dy = e.clientY - toque.y;
-    if (Math.abs(dx) > 90 && Math.abs(dy) < 70) irA(pg + (dx < 0 ? 1 : -1));
-    toque = null;
+    if (toque.horiz === null && Math.hypot(dx, dy) > 12) {
+      toque.horiz = Math.abs(dx) > Math.abs(dy);
+      if (toque.horiz) $("modules").setPointerCapture(e.pointerId);
+    }
+    if (toque.horiz) $("lienzo").style.transform = `translateX(${dx}px)`;
   });
+  function soltarToque(e, cancelado) {
+    if (!toque || e.pointerId !== toque.id) return;
+    const t = toque; toque = null;
+    if (!t.horiz) return;
+    const dx = e.clientX - t.x, vel = Math.abs(dx) / Math.max(1, performance.now() - t.t);
+    if (!cancelado && (Math.abs(dx) > $("modules").clientWidth * .2 || (Math.abs(dx) > 40 && vel > .5))) {
+      deslizarA(dx < 0 ? 1 : -1);
+    } else {
+      const lz = $("lienzo");
+      lz.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 180, easing: "ease-out" });
+      lz.style.transform = "";
+    }
+  }
+  $("modules").addEventListener("pointerup", (e) => soltarToque(e, false));
+  $("modules").addEventListener("pointercancel", (e) => soltarToque(e, true));
+  // Touchpad: deslizar con dos dedos hacia los costados
+  let rueda = 0, ruedaTimer = null;
+  $("modules").addEventListener("wheel", (e) => {
+    if (editing || paginas.length < 2 || Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    rueda += e.deltaX;
+    clearTimeout(ruedaTimer); ruedaTimer = setTimeout(() => { rueda = 0; }, 250);
+    if (Math.abs(rueda) > 120 && !pasando) { deslizarA(rueda > 0 ? 1 : -1); rueda = 0; }
+  }, { passive: false });
 
   $("modules").addEventListener("click", (e) => {
     const b = e.target.closest(".edit-ctl button"); if (!b) return;
