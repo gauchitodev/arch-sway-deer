@@ -1,0 +1,91 @@
+/* Estilo G5 para apps GTK3 (selector de archivos, diálogos, etc.).
+   Se carga encima de Adwaita, el tema de fábrica. */
+
+@define-color theme_bg_color #eceeea;
+@define-color theme_fg_color #1b211c;
+@define-color theme_base_color #f8f9f6;
+@define-color theme_selected_bg_color #ffde00;
+@define-color theme_selected_fg_color #1b211c;
+
+/* Barra de título verde con degradé, como la de la G5 */
+headerbar, .titlebar {
+    background-image: linear-gradient(to right, #1d5a1c, #367c2b 55%, #5ea23a);
+    border-bottom: none;
+    box-shadow: none;
+    color: #ffffff;
+}
+headerbar .title, headerbar .subtitle, headerbar label { color: #ffffff; }
+headerbar button:not(.suggested-action):not(.destructive-action) {
+    color: #ffffff;
+    background-image: none;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(0, 0, 0, 0.25);
+    box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+headerbar button:not(.suggested-action):hover { background-color: rgba(255, 255, 255, 0.24); }
+headerbar button:checked { background-color: #ffde00; color: #1b211c; }
+headerbar entry { background-color: #f8f9f6; color: #1b211c; }
+
+/* Lo seleccionado en amarillo, con letra oscura */
+*:selected,
+row:selected,
+treeview.view:selected,
+iconview:selected,
+flowbox flowboxchild:selected,
+placessidebar row:selected,
+placessidebar row:selected:hover,
+.view:selected,
+textview text selection,
+entry selection,
+label selection {
+    background-color: #ffde00;
+    color: #1b211c;
+}
+placessidebar row:selected label, placessidebar row:selected image,
+row:selected label, row:selected image { color: #1b211c; }
+
+/* Botón de confirmar (Abrir, Guardar, Seleccionar) en verde */
+button.suggested-action, button.default {
+    background-image: none;
+    background-color: #367c2b;
+    border-color: #1d5a1c;
+    color: #ffffff;
+    text-shadow: none;
+    box-shadow: none;
+}
+button.suggested-action:hover, button.default:hover { background-color: #5ea23a; }
+button.suggested-action label, button.default label { color: #ffffff; }
+button.destructive-action {
+    background-image: none;
+    background-color: #c8322b;
+    border-color: #8e1f1a;
+    color: #ffffff;
+}
+
+/* Detalles verdes: foco, casillas, barras de progreso */
+entry:focus { border-color: #367c2b; box-shadow: inset 0 0 0 1px #367c2b; }
+checkbutton check:checked, radiobutton radio:checked, check:checked, radio:checked {
+    background-image: none;
+    background-color: #367c2b;
+    border-color: #1d5a1c;
+    color: #ffffff;
+}
+switch:checked { background-image: none; background-color: #367c2b; border-color: #1d5a1c; }
+progressbar progress, scale highlight, levelbar block.filled {
+    background-image: none;
+    background-color: #367c2b;
+    border-color: #1d5a1c;
+}
+
+/* En la barra verde, el botón de confirmar va en amarillo para que resalte */
+headerbar button.suggested-action, headerbar button.default {
+    background-image: none;
+    background-color: #ffde00;
+    border-color: #b39b00;
+    color: #1b211c;
+    font-weight: bold;
+}
+headerbar button.suggested-action:hover { background-color: #ffe94d; }
+headerbar button.suggested-action label { color: #1b211c; }

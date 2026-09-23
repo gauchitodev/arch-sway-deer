@@ -1,0 +1,47 @@
+/* Estilo G5 para apps GTK4 y libadwaita. */
+
+@define-color accent_color #2c6a22;
+@define-color accent_bg_color #367c2b;
+@define-color accent_fg_color #ffffff;
+@define-color window_bg_color #eceeea;
+@define-color window_fg_color #1b211c;
+@define-color view_bg_color #f8f9f6;
+@define-color headerbar_bg_color #367c2b;
+@define-color headerbar_fg_color #ffffff;
+@define-color headerbar_backdrop_color #2c6a22;
+@define-color sidebar_bg_color #e1e5e1;
+@define-color destructive_bg_color #c8322b;
+
+headerbar, .titlebar {
+    background-image: linear-gradient(to right, #1d5a1c, #367c2b 55%, #5ea23a);
+    color: #ffffff;
+    box-shadow: none;
+}
+headerbar button:not(.suggested-action):not(.destructive-action) { color: #ffffff; }
+headerbar button:checked { background-color: #ffde00; color: #1b211c; }
+
+/* Lo seleccionado en amarillo, como el menú de la G5 */
+row:selected, gridview > child:selected, columnview row:selected,
+listview > row:selected, .navigation-sidebar > row:selected,
+placessidebar row:selected, *:selected {
+    background-color: #ffde00;
+    color: #1b211c;
+}
+row:selected label, row:selected image { color: #1b211c; }
+
+button.suggested-action, button.default {
+    background-color: #367c2b;
+    color: #ffffff;
+}
+button.suggested-action:hover { background-color: #5ea23a; }
+
+/* En la barra verde, el botón de confirmar va en amarillo para que resalte */
+headerbar button.suggested-action, headerbar button.default {
+    background-image: none;
+    background-color: #ffde00;
+    border-color: #b39b00;
+    color: #1b211c;
+    font-weight: bold;
+}
+headerbar button.suggested-action:hover { background-color: #ffe94d; }
+headerbar button.suggested-action label { color: #1b211c; }

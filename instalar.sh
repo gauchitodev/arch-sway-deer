@@ -33,6 +33,8 @@ enlazar() {
 enlazar "$HOME/.config/wofi/style.css" "$G5/wofi/style.css"
 enlazar "$HOME/.config/mako/config" "$G5/mako/config"
 enlazar "$HOME/.config/swaylock/config" "$G5/local/swaylock"
+enlazar "$HOME/.config/gtk-3.0/gtk.css" "$G5/gtk/gtk3.css"
+enlazar "$HOME/.config/gtk-4.0/gtk.css" "$G5/gtk/gtk4.css"
 
 chmod +x "$G5/home/"*.sh "$G5/home/server.py" "$G5/waybar/lanzar.sh"
 
@@ -41,5 +43,8 @@ SWAY="$HOME/.config/sway/config"
 if ! grep -q 'include ~/.config/g5/sway.conf' "$SWAY" 2>/dev/null; then
     printf '\n# Capa G5 (estilo pantalla de cosechadora)\ninclude ~/.config/g5/sway.conf\n' >> "$SWAY"
 fi
+
+# El servicio que abre los selectores de archivos toma el estilo nuevo al reiniciarse
+systemctl --user try-restart xdg-desktop-portal-gtk 2>/dev/null || true
 
 if [ -n "$SWAYSOCK" ]; then swaymsg reload >/dev/null && echo "Listo. Probá Super+G."; else echo "Listo. Entrá a Sway y probá Super+G."; fi

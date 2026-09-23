@@ -25,6 +25,8 @@ pantalla táctil.
 
 - **Barra de arriba** (Waybar) con el estilo de la barra de título de la G5.
 - **Colores de ventanas, lanzador de apps (wofi), notificaciones (mako) y pantalla de bloqueo** a juego.
+- **Apps GTK** (el selector de archivos al descargar o guardar, el control de volumen, etc.) con barra de título
+  verde, lo seleccionado en amarillo y el botón de confirmar resaltado.
 - **Pantalla de inicio** (`Super+G`), pensada para el dedo:
   - **Páginas de trabajo** con paneles de 3 tamaños (Chico, Ancho, Grande), que se editan como en el monitor:
     batería (salud, temperatura, consumo), procesador, memoria, datos usados por día (para cuidar el hotspot),
@@ -105,8 +107,8 @@ y abrí `http://127.0.0.1:8766/` en Chromium.
 ## Desinstalar
 
 Borrá la línea `include ~/.config/g5/sway.conf` de tu config de Sway, borrá los enlaces
-`~/.config/wofi/style.css`, `~/.config/mako/config` y `~/.config/swaylock/config`
-(y renombrá los `.antes-g5` si tenías), y recargá con `Super+Shift+C`.
+`~/.config/wofi/style.css`, `~/.config/mako/config`, `~/.config/swaylock/config`,
+`~/.config/gtk-3.0/gtk.css`, `~/.config/gtk-4.0/gtk.css` (y renombrá los `.antes-g5` si tenías), y recargá con `Super+Shift+C`.
 
 ## Un detalle
 
