@@ -10,6 +10,15 @@ cuadrados con la franjita verde y una **pantalla de inicio táctil** con paneles
 Hecho por un operador de maquinaria agrícola que aprende a programar, para su laptop con
 pantalla táctil.
 
+![Página de trabajo en modo noche](capturas/1-pagina-de-trabajo.png)
+
+| | |
+|---|---|
+| ![Reloj, música, notas, mapa y YouTube](capturas/2-reloj-musica-mapa-youtube.png) | ![Menú de apps](capturas/3-menu-de-apps.png) |
+| Segunda página: reloj, música, notas, mapa y últimos videos | Menú de apps estilo G5 |
+| ![Modo día](capturas/4-modo-dia.png) | |
+| Modo día | |
+
 ## Qué trae
 
 - **Barra de arriba** (Waybar) con el estilo de la barra de título de la G5.
@@ -79,6 +88,17 @@ Se configura en `local/config.json`, que no se sube al repo:
 
 El `comando` corre en el otro equipo: tiene que salir con `0` si el bot anda (y puede imprimir cuántos
 segundos lleva andando) y con `1` si está detenido. Hace falta entrar por SSH **con llave**, sin contraseña.
+
+## Capturas sin datos personales
+
+Para sacar capturas con notas y wifi de mentira, hay un modo demo que corre en otro puerto
+y no toca tu configuración:
+
+```
+G5_DEMO=1 G5_PUERTO=8766 G5_ESTADO=/tmp/demo.json G5_RED=/tmp/red.json python3 ~/.config/g5/home/server.py
+```
+
+y abrí `http://127.0.0.1:8766/` en Chromium.
 
 ## Desinstalar
 

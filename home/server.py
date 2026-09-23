@@ -21,9 +21,11 @@ import xml.etree.ElementTree as ET
 from datetime import date, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-PUERTO = 8765
+PUERTO = int(os.environ.get("G5_PUERTO", 8765))
 CARPETA = os.path.dirname(os.path.abspath(__file__))
-ESTADO = os.path.join(CARPETA, "estado.json")
+ESTADO = os.environ.get("G5_ESTADO") or os.path.join(CARPETA, "estado.json")
+# Modo demo (para sacar capturas sin datos personales): G5_DEMO=1
+DEMO = os.environ.get("G5_DEMO") == "1"
 TOKEN = secrets.token_hex(16)
 
 # Lo que pueden lanzar los botones de la barra de abajo.
@@ -57,6 +59,8 @@ except (OSError, ValueError):
 # El comando remoto sale con 0 si el bot anda (y puede imprimir los segundos que lleva),
 # con 1 si está detenido. Cualquier otra cosa = sin conexión.
 BOT = CONFIG.get("bot") or {}
+if DEMO:
+    BOT = {"nombre": "Mi bot", "dispositivo": "el celular"}
 
 # Nombres más claros para algunas apps
 NOMBRES = {
@@ -219,7 +223,7 @@ def temperatura():
 
 
 _red_cache = {"t": 0, "ssid": None}
-RED_ARCHIVO = os.path.join(CARPETA, "red.json")
+RED_ARCHIVO = os.environ.get("G5_RED") or os.path.join(CARPETA, "red.json")
 _red_uso = {"bajada": 0, "subida": 0, "dias": {}}
 
 
@@ -286,7 +290,7 @@ def red():
         _red_cache.update(t=time.time(), ssid=m.group(1).strip() if m else None)
     rx = leer_int("/sys/class/net/wlan0/statistics/rx_bytes", 0)
     tx = leer_int("/sys/class/net/wlan0/statistics/tx_bytes", 0)
-    return {"dbm": dbm, "ssid": _red_cache["ssid"], "mb": round((rx + tx) / 1048576)}
+    return {"dbm": dbm, "ssid": "MiWifi" if DEMO else _red_cache["ssid"], "mb": round((rx + tx) / 1048576)}
 
 
 def disco():
@@ -416,6 +420,9 @@ _amfbot = {"estado": "revisando" if BOT else "sin_configurar", "segundos": None,
 
 def _vigilar_amfbot():
     """Cada 30 s pregunta al celular si el bot está andando (en un hilo aparte)."""
+    if DEMO:
+        _amfbot.update(estado="andando", segundos=3 * 86400 + 5 * 3600, revisado=time.strftime("%H:%M"))
+        return
     if not BOT:
         return
     ssh = ["ssh", "-p", str(BOT.get("puerto", 22)), "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", BOT["destino"]]
