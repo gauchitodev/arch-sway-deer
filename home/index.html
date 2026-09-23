@@ -72,12 +72,23 @@
   }
   button { touch-action: manipulation; }
 
-  /* Bandeja de edición */
-  .tray { grid-row: 1;
-    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-    padding: 12px 18px; background: var(--yellow); color: var(--yellow-ink);
-    font-size: 16px; font-weight: 700;
+  /* Bandeja de edición: tapa la barra de accesos de abajo (misma altura), así el lienzo
+     no se mueve ni cambia de tamaño al entrar o salir de Editar */
+  .tray { grid-row: 4; grid-column: 1; z-index: 30;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 18px; background: var(--yellow); color: var(--yellow-ink);
+    font-size: 16px; font-weight: 700; position: relative;
   }
+  .tray:not([hidden]) ~ .shortcuts { visibility: hidden; }
+  .tray-tit { text-transform: uppercase; letter-spacing: .06em; margin-right: 6px; }
+  .tray-lista {
+    position: absolute; left: 18px; bottom: calc(100% + 10px); max-width: min(900px, calc(100vw - 36px));
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; border-radius: 4px;
+    background: var(--yellow); box-shadow: 0 8px 26px rgba(0, 0, 0, .45);
+  }
+  .tray-lista[hidden] { display: none; }
+  .tray-lista span { font-weight: 700; padding: 8px 4px; }
+  #addBtn[aria-expanded="true"] { background: #1b211c; color: var(--yellow); }
   .tray[hidden] { display: none !important; }
   .tray button {
     font: 700 15px var(--font); cursor: pointer; min-height: 44px;
@@ -91,7 +102,7 @@
   .run { grid-row: 3; display: grid; grid-template-columns: 1fr 270px; min-height: 0; }
   .modules { padding: 18px; overflow: hidden; position: relative; min-height: 0; }
   /* Lienzo libre: cada panel guarda su lugar y tamaño en fracciones del lienzo */
-  .lienzo { position: relative; height: 100%; transform-origin: top center; touch-action: pan-y; }
+  .lienzo { position: relative; height: 100%; touch-action: pan-y; }
   .editing .lienzo {
     background-image: radial-gradient(circle, rgba(255, 222, 0, .45) 1.2px, transparent 1.6px);
     background-size: var(--paso, 16px) var(--paso, 16px);
@@ -293,7 +304,7 @@
   .pill.crit::before { background: var(--crit); }
 
   /* Barra de accesos (táctil) */
-  .shortcuts { grid-row: 4; display: flex; background: var(--bar-glass); backdrop-filter: blur(8px); border-top: 1px solid var(--tile-edge); }
+  .shortcuts { grid-row: 4; grid-column: 1; display: flex; background: var(--bar-glass); backdrop-filter: blur(8px); border-top: 1px solid var(--tile-edge); }
   .sc {
     flex: 1 1 0; min-width: 0; min-height: 84px;
     background: transparent;
@@ -402,12 +413,13 @@
 </head>
 <body>
   <div class="tray" id="tray" hidden>
-    <span>Agregar panel:</span>
-    <span id="trayItems"></span>
+    <span class="tray-tit">Editando</span>
+    <button type="button" id="addBtn" aria-expanded="false" aria-controls="trayItems">+ Agregar panel</button>
     <button type="button" id="newPage">+ Nueva página</button>
     <button type="button" id="delPage" class="danger">Borrar esta página</button>
     <button type="button" id="reset">Volver al original</button>
     <button type="button" class="done" id="done">Listo</button>
+    <div class="tray-lista" id="trayItems" hidden></div>
   </div>
 
   <div class="pagebar" id="pagebar" hidden>
@@ -634,7 +646,6 @@
   const PASO = 16;                  // imán: los bordes caen cada 16 px
   const MIN_W = 150, MIN_H = 100;   // tamaño mínimo de un panel, en px
   const SPAN = { s: [1, 1], m: [2, 1], g: [2, 2] };
-  let altoRun = 0;                  // alto del lienzo fuera del modo edición
   const lienzoTam = () => { const l = $("lienzo"); return { W: l.clientWidth, H: l.clientHeight }; };
   // Chico / Ancho / Grande según cuánto ocupa (4 columnas × 3 filas de referencia)
   function claseDe(p, W, H) {
@@ -699,7 +710,7 @@
       : "<span>Ya están todos en esta página.</span>";
 
     const varias = paginas.length > 1;
-    $("pagebar").hidden = !varias && !editing;
+    $("pagebar").hidden = !varias;
     $("pgPrev").disabled = $("pgNext").disabled = !varias;
     $("delPage").hidden = !varias;
     $("pgDots").innerHTML = paginas.map((_, i) => `<i class="${i === pg ? "on" : ""}"></i>`).join("");
@@ -718,17 +729,9 @@
     medirLienzo();
     if (ultimo) pintar(ultimo);
   }
-  // En modo edición aparecen la bandeja amarilla y la barra de páginas: el lienzo mantiene
-  // sus medidas de siempre y se achica entero para entrar, así los paneles no cambian de lugar.
-  let escala = 1;
+  // La bandeja de edición tapa la barra de abajo, así que el lienzo mide lo mismo editando o no
   function medirLienzo() {
     const lz = $("lienzo"); if (!lz) return;
-    escala = 1; lz.style.transform = "";
-    if (editing && altoRun) {
-      lz.style.height = altoRun + "px";
-      const box = $("modules"), libre = box.clientHeight - 36;
-      if (libre > 0 && libre < altoRun) { escala = libre / altoRun; lz.style.transform = `scale(${escala})`; }
-    } else { lz.style.height = ""; if (vista === "run" && lz.clientHeight) altoRun = lz.clientHeight; }
     clases();
     // El título corto o largo depende del tamaño
     lz.querySelectorAll('.mod:not([data-k="amfbot"])').forEach(el => {
@@ -755,7 +758,7 @@
   });
   document.addEventListener("pointermove", (e) => {
     const a = arrastre; if (!a || e.pointerId !== a.id) return;
-    const dx = (e.clientX - a.x0) / escala, dy = (e.clientY - a.y0) / escala;
+    const dx = e.clientX - a.x0, dy = e.clientY - a.y0;
     const im = v => Math.round(v / PASO) * PASO;
     let { x, y, w, h } = a.r;
     if (a.tirar) {
@@ -862,8 +865,14 @@
     if (b.hasAttribute("data-rm")) lista.splice(i, 1);
     renderModules(); guardar();
   });
+  function listaPaneles(abrir) {
+    $("trayItems").hidden = !abrir;
+    $("addBtn").setAttribute("aria-expanded", String(abrir));
+  }
+  $("addBtn").addEventListener("click", () => listaPaneles($("trayItems").hidden));
   $("trayItems").addEventListener("click", (e) => {
     const b = e.target.closest("[data-add]"); if (!b) return;
+    listaPaneles(false);
     actual().push({ k: b.dataset.add, t: "s" }); renderModules(); guardar();
   });
   $("newPage").addEventListener("click", () => {
@@ -887,6 +896,7 @@
     $("editBtn").classList.toggle("active", on);
     if (vista === "menu") { renderTiles(); return; }
     $("tray").hidden = !on;
+    listaPaneles(false);
     $("modules").classList.toggle("editing", on);
     desarmarBorrar();
     renderModules();
