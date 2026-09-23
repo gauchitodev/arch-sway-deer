@@ -10,6 +10,8 @@ cuadrados con la franjita verde y una **pantalla de inicio táctil** con paneles
 Hecho por un operador de maquinaria agrícola que aprende a programar, para su laptop con
 pantalla táctil.
 
+![Escritorio con la barra G5](capturas/0-escritorio.png)
+
 ![Página de trabajo en modo noche](capturas/1-pagina-de-trabajo.png)
 
 | | |
