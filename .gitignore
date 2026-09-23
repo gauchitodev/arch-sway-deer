@@ -1,0 +1,5 @@
+# Cosas de cada compu: no van al repo
+local/
+home/estado.json
+home/red.json
+__pycache__/

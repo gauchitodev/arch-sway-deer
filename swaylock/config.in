@@ -1,0 +1,32 @@
+# Pantalla de bloqueo con estilo G5 (la usa Super+Shift+X y el bloqueo automático)
+image=@G5@/bloqueo.jpg
+scaling=fill
+font=Cantarell
+font-size=22
+indicator-radius=110
+indicator-thickness=14
+show-failed-attempts
+line-uses-inside
+separator-color=00000000
+
+# Círculo: verde en reposo, amarillo al teclear
+inside-color=0f4a3fcc
+ring-color=367c2bff
+key-hl-color=ffde00ff
+bs-hl-color=c8322bff
+text-color=ffffffff
+
+# Borrando
+inside-clear-color=0f4a3fcc
+ring-clear-color=ffde00ff
+text-clear-color=ffffffff
+
+# Verificando la contraseña
+inside-ver-color=1d5a1ccc
+ring-ver-color=5ea23aff
+text-ver-color=ffffffff
+
+# Contraseña incorrecta
+inside-wrong-color=c8322bcc
+ring-wrong-color=c8322bff
+text-wrong-color=ffffffff

@@ -1,0 +1,39 @@
+/* Lanzador de apps (Super+D / Super+T) con estilo G5 */
+window {
+    background-color: #eceeea;
+    border: 3px solid #367c2b;
+    font-family: "Cantarell", sans-serif;
+    font-size: 15px;
+}
+#outer-box {
+    margin: 0;
+}
+#input {
+    margin: 0;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 0;
+    color: #ffffff;
+    background-image: linear-gradient(90deg, #1d5a1c, #367c2b 55%, #5ea23a);
+    font-weight: bold;
+}
+#input image {
+    color: #ffffff;
+}
+#scroll {
+    margin: 6px;
+}
+#entry {
+    padding: 9px 12px;
+    border-bottom: 1px solid #d2d8d3;
+}
+#entry:selected {
+    background-color: #ffde00;
+    outline: none;
+}
+#text {
+    color: #1b211c;
+}
+#entry:selected #text {
+    font-weight: bold;
+}

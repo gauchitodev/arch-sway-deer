@@ -1,0 +1,55 @@
+// Barra G5: parte de la config de Carlos (~/.config/waybar/config)
+// y solo cambia el orden, el alto y algunos formatos.
+{
+    "include": ["~/.config/waybar/config"],
+
+    "height": 34,
+
+    // Izquierda = barra de título verde (escritorios + ventana activa)
+    "modules-left": [
+        "sway/workspaces",
+        "sway/mode",
+        "sway/window"
+    ],
+    "modules-center": [],
+    // Derecha = bloque de estado verde azulado, como en la G5
+    "modules-right": [
+        "pulseaudio",
+        "network",
+        "memory",
+        "cpu",
+        "temperature",
+        "custom/keyboard-layout",
+        "battery",
+        "tray",
+        "clock#date",
+        "clock#time",
+        "custom/inicio"
+    ],
+
+    "network": {
+        "interval": 5,
+        "format-wifi": "  {essid} {signalStrength}%",
+        "format-ethernet": "  {ifname}",
+        "format-disconnected": "⚠  Sin wifi",
+        "tooltip-format": "{ifname}: {ipaddr}/{cidr}"
+    },
+
+    "clock#time": {
+        "interval": 10,
+        "format": "{:%H:%M}",
+        "tooltip": false
+    },
+
+    "sway/window": {
+        "format": "{}",
+        "max-length": 80
+    },
+
+    // Botón verde que abre la pantalla de inicio (igual que Super+G)
+    "custom/inicio": {
+        "format": "  Inicio ",
+        "on-click": "~/.config/g5/home/inicio.sh",
+        "tooltip": false
+    }
+}

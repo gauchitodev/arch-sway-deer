@@ -1,0 +1,15 @@
+# Notificaciones con estilo G5
+font=Cantarell 11
+background-color=#0f4a3f
+text-color=#ffffff
+border-color=#367c2b
+border-size=3
+border-radius=0
+padding=12
+margin=10
+width=360
+default-timeout=8000
+
+[urgency=high]
+border-color=#ffde00
+default-timeout=0
