@@ -171,7 +171,6 @@
   .r-verde { fill: var(--green-bright); }
   .r-amar { fill: var(--yellow); }
   .r-rojo { fill: var(--crit); }
-  #cargaLleno { transition: width .8s ease-out; }
   .mod.s #cargaVel { display: none; }
   .bars i { width: 14px; background: var(--bar-off); border-radius: 1px; }
   .bars i.on { background: var(--green); }
@@ -735,6 +734,21 @@
   });
 
   let cargaPico = 1;   // Mbps, para la rampa de carga del internet
+  // La rampa y el número se acercan de a poco al valor medido, como una aguja con inercia
+  let cargaMeta = 0, cargaVista = 0, cargaAnim = 0, cargaAntes = 0;
+  function animarCarga(t) {
+    const dt = cargaAntes ? Math.min(100, t - cargaAntes) : 16; cargaAntes = t;
+    cargaVista += (cargaMeta - cargaVista) * (1 - Math.pow(0.12, dt / 1000));   // ~88 % del camino por segundo
+    if (Math.abs(cargaMeta - cargaVista) < 0.3 || quieto()) cargaVista = cargaMeta;
+    const pb = $("cargaPct"), n = Math.round(cargaVista);
+    if (pb) {
+      pb.innerHTML = `${n}<small>%</small>`;
+      pb.className = n > 85 ? "alta" : n > 60 ? "media" : "";
+      $("cargaLleno").setAttribute("width", (250 * cargaVista / 100).toFixed(1));
+    }
+    cargaAnim = cargaVista === cargaMeta ? 0 : requestAnimationFrame(animarCarga);
+    if (!cargaAnim) cargaAntes = 0;
+  }
   function guardar() { api("/api/estado", { paginas }).catch(() => {}); }
 
   // ---------- Lienzo libre: mover y agrandar paneles ----------
@@ -1302,11 +1316,9 @@
       const total = (ur.bajada || 0) + (ur.subida || 0);
       cargaPico = Math.max(1, total, cargaPico * 0.99);
       const pct = Math.min(100, Math.round(100 * total / cargaPico));
-      const pb = $("cargaPct");
-      if (pb) {
-        pb.innerHTML = `${pct}<small>%</small>`;
-        pb.className = pct > 85 ? "alta" : pct > 60 ? "media" : "";
-        $("cargaLleno").style.width = (250 * pct / 100) + "px";
+      cargaMeta = pct;
+      if (!cargaAnim) cargaAnim = requestAnimationFrame(animarCarga);
+      if ($("cargaPct")) {
         set("cargaVel", `↓ ${ur.bajada.toFixed(1)} Mbps · ↑ ${ur.subida.toFixed(1)} Mbps · tope ${cargaPico.toFixed(1)} Mbps`);
       }
     }
