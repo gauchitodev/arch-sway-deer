@@ -5,7 +5,8 @@ Escritorio estilo G5 para Sway.
 Una capa de personalización para [Sway](https://swaywm.org/) que le da a tu escritorio Linux
 la estética de las pantallas de cabina **G5 CommandCenter** de las cosechadoras y tractores:
 barra verde, bloque de estado verde azulado, lo seleccionado en amarillo, íconos en
-cuadrados con la franjita verde y una **pantalla de inicio táctil** con paneles de datos.
+cuadrados con la franjita verde, un medidor de **carga del internet** como la carga del motor
+y una **pantalla de inicio táctil** con paneles que movés y agrandás a gusto.
 
 Hecho por un operador de maquinaria agrícola que aprende a programar, para su laptop con
 pantalla táctil.
@@ -23,16 +24,27 @@ pantalla táctil.
 
 ## Qué trae
 
-- **Barra de arriba** (Waybar) con el estilo de la barra de título de la G5.
+- **Barra de arriba** (Waybar) con el estilo de la barra de título de la G5:
+  - **Carga del internet** al lado del wifi: una rampa que se llena de izquierda a derecha, como la carga
+    del motor de la cosechadora (verde, amarilla y roja al tope). El 100 % es la mayor velocidad vista hace
+    poco, así se adapta sola a un hotspot o a un wifi rápido. Pasando el mouse muestra bajada, subida y tope.
+  - Con un parlante o auriculares **Bluetooth**, el volumen muestra el símbolo y el nombre del aparato.
 - **Colores de ventanas, lanzador de apps (wofi), notificaciones (mako) y pantalla de bloqueo** a juego.
 - **Apps GTK** (el selector de archivos al descargar o guardar, el control de volumen, etc.) con barra de título
   verde, lo seleccionado en amarillo y el botón de confirmar resaltado.
 - **Pantalla de inicio** (`Super+G`), pensada para el dedo:
   - **Páginas de trabajo** con paneles libres: en **Editar** los arrastrás a donde quieras y los agrandás
-    desde la esquina amarilla (con el dedo o el mouse). Según el tamaño muestran más o menos detalle:
+    desde la esquina amarilla (con el dedo o el mouse), con imán cada 16 px para que queden alineados.
+    Mientras editás, la bandeja amarilla ocupa el lugar de la barra de abajo, así la página no se mueve:
+    lo que ves es lo que queda.
+  - **Deslizar para cambiar de página**: la página sigue al dedo, como en el celular. También con dos dedos
+    en el touchpad o con las flechas.
+  - Paneles (según el tamaño muestran más o menos detalle):
     batería (salud, temperatura, consumo), procesador, memoria, datos usados por día (para cuidar el hotspot),
-    temperaturas, wifi, **Bluetooth** (prender/apagar, conectar tus aparatos, ver su batería y vincular nuevos), disco, reloj, música sonando (YouTube / YouTube Music), mapa, últimos videos de YouTube,
-    notas y el estado de un bot que corre en otro equipo por SSH.
+    temperaturas, **wifi con la carga del internet** (red, señal, rampa de carga, bajada y subida),
+    **Bluetooth** (prender/apagar, conectar tus aparatos, ver su batería y vincular nuevos), disco, reloj,
+    **música** (lo que suena en YouTube / YouTube Music, con barra para adelantar, volumen y la portada de fondo),
+    mapa, últimos videos de YouTube, notas y el estado de un bot que corre en otro equipo por SSH.
   - **Menú de apps** estilo G5: Favoritas, Todas las apps y Sistema (apagar y reiniciar piden dos toques).
   - Modo **día** y **noche** (el cambio se funde suave), y un **bip** al tocar los botones, como el monitor.
 - Fondo de pantalla y pantalla de bloqueo con fotos propias de una S770 en cosecha.
@@ -69,8 +81,11 @@ Se puede correr las veces que quieras.
 | Qué | Cómo |
 |---|---|
 | Abrir o cerrar la pantalla de inicio | `Super+G`, o el botón verde **Inicio** de la barra |
-| Pasar de página | flechas de arriba, deslizar el dedo o las flechas del teclado |
-| Acomodar paneles | botón **Editar** |
+| Pasar de página | deslizar el dedo, dos dedos en el touchpad, las flechas de arriba o las del teclado |
+| Mover un panel | **Editar** y arrastrarlo |
+| Agrandar o achicar un panel | **Editar** y tirar de la esquina amarilla de abajo a la derecha |
+| Agregar o quitar paneles | **Editar** → **+ Agregar panel**, o la ✕ roja de cada panel |
+| Adelantar un tema | arrastrar la barra del panel de música |
 | Menú de apps | botón verde **Menú** (se cierra con la X amarilla o Esc) |
 
 ## Panel del bot (opcional)
