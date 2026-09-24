@@ -269,8 +269,10 @@ def _contar_red():
 def uso_red():
     hoy = date.today()
     semana = [(hoy - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
+    # En el demo la carga del internet queda en el rojo, así las capturas lucen los colores
+    bajada, subida = (0.82, 0.12) if DEMO else (_red_uso["bajada"], _red_uso["subida"])
     return {
-        "bajada": _red_uso["bajada"], "subida": _red_uso["subida"],
+        "bajada": bajada, "subida": subida,
         "hoy_mb": round(_red_uso["dias"].get(hoy.isoformat(), 0) / 1048576),
         "semana": [{"dia": d, "mb": round(_red_uso["dias"].get(d, 0) / 1048576)} for d in semana],
     }

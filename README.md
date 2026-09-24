@@ -22,6 +22,10 @@ pantalla táctil.
 | ![Modo día](capturas/4-modo-dia.png) | ![Panel de Bluetooth](capturas/5-bluetooth.png) |
 | Modo día | Panel de Bluetooth: prender, conectar y vincular con el dedo |
 
+![Pantalla de bloqueo](capturas/6-bloqueo.png)
+
+Pantalla de bloqueo (al suspender o con `Super+Shift+X`): la cosechadora de fondo y el círculo en verde G5.
+
 ## Qué trae
 
 - **Barra de arriba** (Waybar) con el estilo de la barra de título de la G5:
