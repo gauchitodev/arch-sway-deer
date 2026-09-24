@@ -1,4 +1,4 @@
-# arch-sway-deer
+# sway-deere
 
 Escritorio estilo G5 para Sway.
 
@@ -53,7 +53,7 @@ No hace falta instalar nada de Python: el servidor de la pantalla de inicio usa 
 ## Instalación
 
 ```
-git clone https://github.com/gauchitodev/arch-sway-deer.git ~/.config/g5
+git clone https://github.com/gauchitodev/sway-deere.git ~/.config/g5
 ~/.config/g5/instalar.sh
 ```
 
