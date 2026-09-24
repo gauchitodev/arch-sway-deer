@@ -1032,6 +1032,7 @@
     chat: '<path d="M4 20l1.5-4A8 8 0 1 1 8 18.5z"/><path d="M9 11h6M9 14h4"/>',
     net: '<circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v5M12 12l-6 5.5M12 12l6 5.5"/>',
     camera: '<path d="M3 7h12v10H3z"/><path d="M15 10l6-3v10l-6-3"/>',
+    tv: '<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M8 2l4 4 4-4M10 10l4 2.5-4 2.5z"/>',
     gps: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
     app: '<rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/>',
     wifi: '<path d="M2 9a15 15 0 0 1 20 0"/><path d="M5.5 12.5a10 10 0 0 1 13 0"/><path d="M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1"/>',
@@ -1050,6 +1051,7 @@
     const c = a.categorias, id = a.id;
     if (/youtube(?!.*music)/i.test(id) && !/ytmusic/.test(id)) return "play";
     if (/ytmusic/.test(id)) return "music";
+    if (/disney|netflix|primevideo|prime-video|hbo|paramount|crunchyroll|plex|jellyfin|kodi/i.test(id)) return "tv";
     if (c.includes("WebBrowser")) return "globe";
     if (c.includes("TerminalEmulator")) return "term";
     if (c.includes("WordProcessor")) return "doc";
