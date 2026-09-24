@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="es" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora G5</title>
+<style>
+  :root {
+    --green: #367c2b;
+    --green-deep: #1d5a1c;
+    --green-bright: #5ea23a;
+    --yellow: #ffde00;
+    --yellow-ink: #1b211c;
+    --crit: #c8322b;
+    --font: "Cantarell", "Noto Sans", sans-serif;
+    /* Modo día */
+    --screen: #eceeea;
+    --tile: #f8f9f6;
+    --tile-top: #ffffff;
+    --tile-edge: #b6beb8;
+    --mod-head: #dfe4df;
+    --track: #d9ded9;
+    --sc-top: #eef1ee;
+    --sc-bottom: #d6dcd7;
+    --ink: #1b211c;
+    --muted: #59625b;
+    --lcd: #0f4a3f;
+    --lcd-ink: #e9f5e4;
+    --lcd-muted: #9fc9bc;
+  }
+  html[data-mode="noche"] {
+    color-scheme: dark;
+    --screen: #2f2b26;
+    --tile: #3a352f;
+    --tile-top: #454039;
+    --tile-edge: #585045;
+    --mod-head: #342f29;
+    --track: #25221d;
+    --sc-top: #3e3932;
+    --sc-bottom: #2c2823;
+    --ink: #ede7da;
+    --muted: #b2a894;
+    --lcd: #0b3a31;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--screen); color: var(--ink); font-family: var(--font);
+    display: grid; grid-template-rows: auto auto 1fr;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation; overflow: hidden;
+  }
+
+  /* Barra de título verde, como la barra de la G5 */
+  header {
+    display: flex; align-items: center; gap: 10px; padding: 0 6px 0 14px; min-height: 44px;
+    background-image: linear-gradient(90deg, #1d5a1c, #367c2b 55%, #5ea23a); color: #fff;
+  }
+  header h1 { margin: 0; font-size: 16px; letter-spacing: .04em; flex: 1; }
+  header button {
+    width: 40px; height: 36px; border: 0; border-radius: 3px; cursor: pointer;
+    background: transparent; color: #fff; font: 700 17px var(--font);
+  }
+  header button:active { background: rgba(0, 0, 0, .2); }
+
+  /* Visor: bloque de estado verde azulado */
+  .visor {
+    margin: 12px 12px 0; padding: 10px 14px 12px; border-radius: 4px;
+    background: var(--lcd); color: var(--lcd-ink); border: 1px solid rgba(0, 0, 0, .25);
+    display: grid; gap: 4px; min-height: 118px; align-content: end;
+  }
+  .cinta { display: grid; gap: 2px; justify-items: end; min-height: 36px; align-content: end; }
+  .cinta div { font-size: 13px; color: var(--lcd-muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .cinta div b { color: var(--lcd-ink); font-weight: 700; }
+  .expr { text-align: right; font-size: 16px; color: var(--lcd-muted); min-height: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; direction: rtl; }
+  .expr span { direction: ltr; unicode-bidi: isolate; }
+  .num { text-align: right; font-size: 44px; font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+  .num.chico { font-size: 30px; }
+  .num.error { color: var(--yellow); font-size: 26px; }
+
+  /* Teclado */
+  .teclas {
+    padding: 12px; display: grid; gap: 8px;
+    grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; min-height: 0;
+  }
+  .teclas button {
+    min-height: 48px; border-radius: 4px; cursor: pointer; font: 700 22px var(--font);
+    color: var(--ink); border: 1px solid var(--tile-edge);
+    background: linear-gradient(var(--sc-top), var(--sc-bottom));
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .08);
+    display: grid; place-items: center;
+  }
+  .teclas button.num-t { background: linear-gradient(var(--tile-top), var(--tile)); }
+  .teclas button svg { width: 26px; height: 26px; }
+  header button svg { width: 20px; height: 20px; }
+  .teclas button.op { font-size: 30px; background: var(--yellow); color: var(--yellow-ink); border-color: #b39b00; }
+  .teclas button.fn { color: var(--muted); font-size: 18px; }
+  .teclas button.borrar { background: var(--crit); color: #fff; border-color: #8e1f1a; }
+  .teclas button.igual { background: var(--green); color: #fff; border-color: var(--green-deep); font-size: 30px; }
+  .teclas button.cero { grid-column: span 2; }
+  .teclas button:active, .teclas button.apretada { filter: brightness(.82); box-shadow: inset 0 2px 4px rgba(0, 0, 0, .25); }
+  .teclas button.op.activa { outline: 3px solid var(--green-bright); outline-offset: -3px; }
+  @media (prefers-reduced-motion: no-preference) { .teclas button { transition: filter .08s; } }
+</style>
+</head>
+<body>
+  <header>
+    <h1>CALCULADORA</h1>
+    <button type="button" id="modo" aria-label="Cambiar modo día o noche">☾</button>
+    <button type="button" id="cerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </header>
+
+  <div class="visor" aria-live="polite">
+    <div class="cinta" id="cinta"></div>
+    <div class="expr" id="expr"><span></span></div>
+    <div class="num" id="num">0</div>
+  </div>
+
+  <div class="teclas" id="teclas">
+    <button type="button" class="borrar" data-k="c" aria-label="Borrar todo">C</button>
+    <button type="button" class="fn" data-k="bs" aria-label="Borrar un número"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 5h11v14H9l-6-7z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/></svg></button>
+    <button type="button" class="fn" data-k="%" aria-label="Por ciento">%</button>
+    <button type="button" class="op" data-k="/" aria-label="Dividir">÷</button>
+
+    <button type="button" class="num-t" data-k="7">7</button>
+    <button type="button" class="num-t" data-k="8">8</button>
+    <button type="button" class="num-t" data-k="9">9</button>
+    <button type="button" class="op" data-k="*" aria-label="Multiplicar">×</button>
+
+    <button type="button" class="num-t" data-k="4">4</button>
+    <button type="button" class="num-t" data-k="5">5</button>
+    <button type="button" class="num-t" data-k="6">6</button>
+    <button type="button" class="op" data-k="-" aria-label="Restar">−</button>
+
+    <button type="button" class="num-t" data-k="1">1</button>
+    <button type="button" class="num-t" data-k="2">2</button>
+    <button type="button" class="num-t" data-k="3">3</button>
+    <button type="button" class="op" data-k="+" aria-label="Sumar">+</button>
+
+    <button type="button" class="num-t cero" data-k="0">0</button>
+    <button type="button" class="num-t" data-k="," aria-label="Coma decimal">,</button>
+    <button type="button" class="igual" data-k="=" aria-label="Igual">=</button>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  const SOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>';
+  const LUNA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+  // Modo día / noche: lo manda el lanzador en la dirección (#noche o #dia)
+  function setModo(m) {
+    document.documentElement.dataset.mode = m;
+    $("modo").innerHTML = m === "noche" ? SOL : LUNA;
+  }
+  setModo(location.hash === "#noche" ? "noche" : "dia");
+  $("modo").addEventListener("click", () => setModo(document.documentElement.dataset.mode === "noche" ? "dia" : "noche"));
+  $("cerrar").addEventListener("click", () => window.close());
+
+  /* ---------- Cuentas ----------
+     Se guarda la cuenta como una lista: número, operación, número, ...
+     y se resuelve respetando que × y ÷ van antes que + y −. Sin eval. */
+  const SIMB = { "+": "+", "-": "−", "*": "×", "/": "÷" };
+  let partes = [];          // números (como texto) y operaciones ya cerradas
+  let actual = "0";         // número que se está escribiendo (con punto decimal)
+  let recienIgual = false;  // después de "=", un número nuevo empieza de cero
+  let error = false;
+  const cinta = [];
+
+  // Redondea para no mostrar cosas como 0,30000000000000004
+  const limpio = (x) => Number.parseFloat(x.toPrecision(12));
+
+  function resolver(lista) {
+    // Primero × y ÷
+    const a = [Number(lista[0])];
+    for (let i = 1; i < lista.length; i += 2) {
+      const op = lista[i], n = Number(lista[i + 1]);
+      if (op === "*") a[a.length - 1] *= n;
+      else if (op === "/") {
+        if (n === 0) throw new Error("div0");
+        a[a.length - 1] /= n;
+      } else a.push(op, n);
+    }
+    // Después + y −
+    let r = a[0];
+    for (let i = 1; i < a.length; i += 2) r = a[i] === "+" ? r + a[i + 1] : r - a[i + 1];
+    if (!Number.isFinite(r)) throw new Error("grande");
+    return limpio(r);
+  }
+
+  // Formato uruguayo: punto para miles, coma para decimales
+  function formato(txt) {
+    if (txt === "-") return "−";
+    const neg = txt.startsWith("-"), t = neg ? txt.slice(1) : txt;
+    if (/e/i.test(t)) return (neg ? "−" : "") + t.replace(".", ",");
+    const [ent, dec] = t.split(".");
+    const miles = ent.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (neg ? "−" : "") + miles + (dec !== undefined ? "," + dec : "");
+  }
+  const textoDe = (n) => String(n);
+
+  function pintar() {
+    const num = $("num");
+    num.classList.remove("error", "chico");
+    if (error) { num.textContent = error; num.classList.add("error"); }
+    else {
+      num.textContent = formato(actual);
+      if (num.textContent.length > 13) num.classList.add("chico");
+    }
+    $("expr").firstElementChild.textContent = partes.map((p, i) => i % 2 ? " " + SIMB[p] + " " : formato(p)).join("");
+    $("cinta").innerHTML = "";
+    cinta.slice(-3).forEach(c => {
+      const d = document.createElement("div");
+      d.textContent = c.cuenta + " = ";
+      const b = document.createElement("b"); b.textContent = c.resultado; d.appendChild(b);
+      $("cinta").appendChild(d);
+    });
+    const ultOp = partes.length % 2 === 0 && partes.length ? partes[partes.length - 1] : null;
+    document.querySelectorAll(".op").forEach(b => b.classList.toggle("activa", actual === "" && b.dataset.k === ultOp));
+  }
+
+  function digito(d) {
+    if (error) limpiar();
+    if (recienIgual) { actual = "0"; recienIgual = false; }
+    if (actual === "") actual = "0";
+    const cifras = actual.replace(/[^0-9]/g, "").length;
+    if (cifras >= 15) return;
+    if (d === ".") { if (!actual.includes(".")) actual += "."; return; }
+    actual = actual === "0" ? d : actual === "-0" ? "-" + d : actual + d;
+  }
+
+  function operacion(op) {
+    if (error) return;
+    recienIgual = false;
+    if (actual === "") { if (partes.length) partes[partes.length - 1] = op; return; }   // cambiar de operación
+    partes.push(textoDe(Number(actual)), op);
+    actual = "";
+  }
+
+  function porciento() {
+    if (error || actual === "") return;
+    const n = Number(actual);
+    // 200 + 10 % = 220 (el 10 % de 200); 200 × 10 % = 20; solo: 10 % = 0,1
+    if (partes.length >= 2 && (partes[partes.length - 1] === "+" || partes[partes.length - 1] === "-")) {
+      try { actual = textoDe(limpio(resolver(partes.slice(0, -1)) * n / 100)); } catch { falla("No se puede"); }
+    } else actual = textoDe(limpio(n / 100));
+  }
+
+  function igual() {
+    if (error) return;
+    if (!partes.length) return;
+    const lista = partes.concat(actual === "" ? [] : [textoDe(Number(actual))]);
+    if (lista.length % 2 === 0) lista.pop();   // termina en operación: se ignora
+    const cuenta = lista.map((p, i) => i % 2 ? " " + SIMB[p] + " " : formato(p)).join("");
+    try {
+      const r = resolver(lista);
+      actual = textoDe(r);
+      cinta.push({ cuenta, resultado: formato(actual) });
+      if (cinta.length > 20) cinta.shift();
+      partes = []; recienIgual = true;
+    } catch (e) {
+      falla(e.message === "div0" ? "No se puede dividir entre 0" : "Número demasiado grande");
+    }
+  }
+
+  function falla(msj) { error = msj; partes = []; actual = "0"; }
+  function limpiar() { partes = []; actual = "0"; error = false; recienIgual = false; }
+  function atras() {
+    if (error) { limpiar(); return; }
+    if (recienIgual) { recienIgual = false; return; }
+    if (actual === "") { partes.pop(); actual = partes.pop() || "0"; return; }
+    actual = actual.length > 1 && actual !== "-0" ? actual.slice(0, -1) : "0";
+    if (actual === "-") actual = "0";
+  }
+
+  function tecla(k) {
+    if (/^[0-9]$/.test(k)) digito(k);
+    else if (k === "," || k === ".") digito(".");
+    else if ("+-*/".includes(k)) operacion(k);
+    else if (k === "%") porciento();
+    else if (k === "=") igual();
+    else if (k === "c") limpiar();
+    else if (k === "bs") atras();
+    pintar();
+  }
+
+  $("teclas").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-k]"); if (b) tecla(b.dataset.k);
+  });
+
+  // Teclado físico, incluido el numérico
+  const MAPA = { Enter: "=", "=": "=", Escape: "c", Delete: "c", Backspace: "bs", ",": ",", ".": ".", Decimal: "." };
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.altKey || e.metaKey) {
+      if (e.ctrlKey && e.key.toLowerCase() === "c") copiar();
+      return;
+    }
+    let k = MAPA[e.key] || e.key;
+    if (e.code === "NumpadDecimal") k = ".";
+    if (!/^[0-9]$/.test(k) && !"+-*/%=.,".includes(k) && k !== "c" && k !== "bs") return;
+    e.preventDefault();
+    tecla(k);
+    // Que se vea la tecla apretada
+    const kb = k === "." ? "," : k;
+    const b = document.querySelector(`.teclas button[data-k="${CSS.escape(kb)}"]`);
+    if (b) { b.classList.add("apretada"); setTimeout(() => b.classList.remove("apretada"), 110); }
+  });
+
+  // Ctrl+C copia el resultado, con coma decimal
+  function copiar() {
+    if (error || !navigator.clipboard) return;
+    navigator.clipboard.writeText(formato(actual || "0").replace(/\./g, "").replace("−", "-")).catch(() => {});
+  }
+
+  pintar();
+})();
+</script>
+</body>
+</html>

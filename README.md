@@ -47,6 +47,10 @@ pantalla táctil.
     mapa, últimos videos de YouTube, notas y el estado de un bot que corre en otro equipo por SSH.
   - **Menú de apps** estilo G5: Favoritas, Todas las apps y Sistema (apagar y reiniciar piden dos toques).
   - Modo **día** y **noche** (el cambio se funde suave), y un **bip** al tocar los botones, como el monitor.
+- **Calculadora G5** en la tecla de calculadora del teclado (la que está arriba del teclado numérico):
+  visor verde azulado, operaciones en amarillo, coma decimal y punto de miles como en Uruguay, las últimas
+  cuentas arriba y anda con el teclado numérico. Sigue el modo día o noche de la pantalla de inicio.
+  El teclado numérico arranca con Bloq Num prendido.
 - Fondo de pantalla y pantalla de bloqueo con fotos propias de una S770 en cosecha.
 
 ## Requisitos
@@ -87,6 +91,7 @@ Se puede correr las veces que quieras.
 | Agregar o quitar paneles | **Editar** → **+ Agregar panel**, o la ✕ roja de cada panel |
 | Adelantar un tema | arrastrar la barra del panel de música |
 | Menú de apps | botón verde **Menú** (se cierra con la X amarilla o Esc) |
+| Calculadora | tecla de calculadora (otra vez la cierra); Ctrl+C copia el resultado |
 
 ## Panel del bot (opcional)
 
