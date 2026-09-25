@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <!-- Foto de ejemplo: montañas de noche (dibujo propio, MIT como el resto del repo) -->
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#15121f"/><stop offset=".6" stop-color="#3d3358"/><stop offset="1" stop-color="#8c7bb8"/>
+    </linearGradient>
+    <radialGradient id="luna"><stop offset="0" stop-color="#f3effb"/><stop offset=".22" stop-color="#e7e1f6"/><stop offset=".3" stop-color="#e7e1f6" stop-opacity=".25"/><stop offset="1" stop-color="#e7e1f6" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#cielo)"/>
+  <g fill="#fff" opacity=".8">
+    <circle cx="120" cy="140" r="2.5"/><circle cx="300" cy="80" r="2"/><circle cx="420" cy="210" r="3"/><circle cx="560" cy="120" r="2"/>
+    <circle cx="690" cy="60" r="2.5"/><circle cx="980" cy="110" r="2"/><circle cx="1100" cy="240" r="3"/><circle cx="220" cy="330" r="2"/>
+    <circle cx="640" cy="300" r="2"/><circle cx="1040" cy="380" r="2"/><circle cx="80" cy="460" r="2.5"/><circle cx="480" cy="420" r="1.8"/>
+  </g>
+  <circle cx="820" cy="260" r="220" fill="url(#luna)"/>
+  <path d="M0 760 L180 560 L300 660 L470 430 L640 690 L760 580 L940 760 L1080 600 L1200 700 V1200 H0Z" fill="#4a3f69"/>
+  <path d="M470 430 L418 500 L450 488 L478 515 L500 492 L516 500Z" fill="#cfc4ea" opacity=".7"/>
+  <path d="M0 880 L240 700 L420 830 L600 690 L820 880 L1000 760 L1200 860 V1200 H0Z" fill="#2e2743"/>
+  <path d="M0 1010 L300 900 L560 990 L860 900 L1200 1000 V1200 H0Z" fill="#1a1627"/>
+</svg>

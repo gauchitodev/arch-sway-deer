@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <!-- Foto de ejemplo: campo sembrado al atardecer (dibujo propio, MIT como el resto del repo) -->
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d3a4a"/><stop offset=".55" stop-color="#d98c3a"/><stop offset="1" stop-color="#ffd76a"/>
+    </linearGradient>
+    <linearGradient id="tierra" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f6b24"/><stop offset="1" stop-color="#1c3310"/>
+    </linearGradient>
+    <radialGradient id="sol"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffde00" stop-opacity=".9"/><stop offset="1" stop-color="#ffde00" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="620" fill="url(#cielo)"/>
+  <circle cx="760" cy="600" r="260" fill="url(#sol)"/>
+  <path d="M0 610 Q300 585 600 600 T1200 598 V640 H0Z" fill="#2b4a1a"/>
+  <rect y="620" width="1200" height="580" fill="url(#tierra)"/>
+  <g stroke="#6fae3f" stroke-width="10" stroke-linecap="round" opacity=".75" fill="none">
+    <path d="M600 622 L-900 1200"/><path d="M600 622 L-500 1200"/><path d="M600 622 L-150 1200"/>
+    <path d="M600 622 L180 1200"/><path d="M600 622 L480 1200"/><path d="M600 622 L720 1200"/>
+    <path d="M600 622 L1020 1200"/><path d="M600 622 L1350 1200"/><path d="M600 622 L1700 1200"/><path d="M600 622 L2100 1200"/>
+  </g>
+  <g fill="#1a2a12">
+    <rect x="150" y="560" width="10" height="55"/><circle cx="155" cy="545" r="38"/><circle cx="185" cy="560" r="26"/>
+    <rect x="1010" y="575" width="8" height="40"/><circle cx="1014" cy="562" r="28"/>
+  </g>
+</svg>

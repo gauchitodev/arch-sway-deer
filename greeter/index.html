@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inicio de sesión</title>
+<!-- Pantalla de login para lightdm-webkit2-greeter.
+     Dos usuarios, uno a cada lado de una diagonal. Se elige con el mouse, el dedo
+     o Super + flechas; la contraseña usa un aro como el de swaylock.
+     Los nombres, fotos y colores vienen de usuarios.js (ver usuarios.ejemplo.js). -->
+<script src="usuarios.js"></script>
+<style>
+  :root {
+    --font: "Cantarell", "Noto Sans", sans-serif;
+    --rojo: #e0483e;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0e0d11; color: #fff; font-family: var(--font); user-select: none; cursor: default; }
+
+  .lado { position: absolute; inset: 0; transition: filter .45s ease; }
+  .lado .foto { position: absolute; top: 0; bottom: 0; background-size: cover; background-position: center; transform: scale(1.03); transition: transform .8s ease; }
+  /* Cada foto se encuadra en su propia mitad (un poco más ancha por la diagonal) */
+  #izq .foto { left: 0; width: 56%; }
+  #der .foto { left: 44%; width: 56%; }
+  /* Tinte de color encima de la foto. Sin mix-blend-mode: WebKit no mezcla mientras dura la
+     transición y el lado se iluminaba un instante antes de oscurecerse. */
+  .lado .tinte { position: absolute; inset: 0; opacity: 0; transition: opacity .45s ease; }
+  .lado.activo .tinte { opacity: .2; }
+  .lado::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15) 40%, rgba(0,0,0,.65)); transition: background .45s; }
+  .lado.apagado { filter: grayscale(.85) brightness(.45); }
+  .lado.activo .foto { transform: scale(1); }
+
+  /* Recortes en diagonal (los puntos se calculan en JS) */
+  #izq { clip-path: polygon(0 0, 54% 0, 46% 100%, 0 100%); }
+  #der { clip-path: polygon(54% 0, 100% 0, 100% 100%, 46% 100%); }
+
+  /* Bordes resaltados, como la ventana activa de Sway */
+  svg.bordes { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+  svg.bordes polygon { fill: none; stroke-width: 0; transition: stroke-width .3s ease, opacity .3s; opacity: 0; }
+  svg.bordes polygon.activo { stroke-width: 8; opacity: 1; }
+  svg.bordes line { stroke: rgba(255,255,255,.55); stroke-width: 2; }
+
+  /* Contenido de cada lado */
+  .tarjeta {
+    position: absolute; top: 50%; transform: translate(-50%, -46%); z-index: 3;
+    display: grid; justify-items: center; gap: 18px; text-align: center; width: 420px;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .tarjeta.apagado { opacity: .55; transform: translate(-50%, -44%) scale(.94); }
+  .nombre { font-size: 64px; font-weight: 800; letter-spacing: -.01em; text-shadow: 0 3px 18px rgba(0,0,0,.6); }
+  .detalle { margin-top: -14px; font-size: 18px; letter-spacing: .14em; text-transform: uppercase; opacity: .85; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
+
+  .aro { position: relative; width: 210px; height: 210px; }
+  .aro svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+  .aro .fondo { fill: rgba(10, 10, 14, .55); stroke: rgba(255,255,255,.18); stroke-width: 14; }
+  .aro .color { fill: none; stroke-width: 14; opacity: .9; }
+  .aro .chispa { fill: none; stroke-width: 14; stroke-linecap: butt; }
+  .aro .gira { fill: none; stroke-width: 14; stroke-dasharray: 90 470; opacity: 0; }
+  .aro.verificando .gira { opacity: 1; animation: girar 0.9s linear infinite; transform-origin: 105px 105px; }
+  .aro.error .color { stroke: var(--rojo) !important; }
+  .aro.error { animation: temblar .45s ease; }
+  .aro .texto { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; padding: 0 30px; font-size: 17px; font-weight: 700; line-height: 1.3; }
+  .aro .texto small { display: block; font-weight: 400; font-size: 14px; opacity: .75; margin-top: 4px; }
+  .tarjeta.apagado .aro { opacity: .35; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  @keyframes temblar { 0%, 100% { translate: 0 0; } 20% { translate: -14px 0; } 40% { translate: 12px 0; } 60% { translate: -8px 0; } 80% { translate: 5px 0; } }
+
+  /* Hora arriba, botones abajo */
+  .hora { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); z-index: 4; text-align: center; text-shadow: 0 2px 14px rgba(0,0,0,.7); }
+  .hora b { display: block; font-size: 56px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+  .hora span { font-size: 18px; opacity: .9; }
+  .hora span::first-letter { text-transform: uppercase; }
+  .pie { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 4; display: flex; gap: 10px; }
+  .pie button {
+    display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.25); background: rgba(12,12,16,.55); color: #fff; font: 700 14px var(--font);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  }
+  .pie button:hover { background: rgba(40,40,48,.7); }
+  .pie button.armado { background: var(--rojo); border-color: var(--rojo); }
+  .pie svg { width: 20px; height: 20px; }
+  .ayuda { position: absolute; bottom: 34px; right: 30px; z-index: 4; font-size: 13px; opacity: .7; text-shadow: 0 1px 6px #000; }
+  .ayuda kbd { font: 700 12px var(--font); padding: 2px 6px; border: 1px solid rgba(255,255,255,.4); border-radius: 4px; }
+  input#clave { position: absolute; left: -9999px; opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+  <section class="lado" id="izq"><div class="foto"></div><div class="tinte"></div></section>
+  <section class="lado" id="der"><div class="foto"></div><div class="tinte"></div></section>
+
+  <svg class="bordes" id="bordes" aria-hidden="true">
+    <polygon id="bordeIzq"></polygon>
+    <polygon id="bordeDer"></polygon>
+    <line id="diagonal"></line>
+  </svg>
+
+  <div class="tarjeta" id="tarjIzq" style="left:25%"></div>
+  <div class="tarjeta" id="tarjDer" style="left:75%"></div>
+
+  <div class="hora"><b id="hora">--:--</b><span id="fecha"></span></div>
+
+  <nav class="pie" aria-label="Energía">
+    <button type="button" id="suspender"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Suspender</button>
+    <button type="button" id="reiniciar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>Reiniciar</button>
+    <button type="button" id="apagar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7a8 8 0 1 0 11.4 0"/></svg>Apagar</button>
+  </nav>
+  <div class="ayuda"><kbd>Super</kbd> + <kbd>←</kbd> <kbd>→</kbd> cambiar de usuario · <kbd>Enter</kbd> entrar</div>
+
+  <input id="clave" type="password" autocomplete="off" aria-label="Contraseña">
+
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- Modo prueba: fuera del greeter, un lightdm de mentira (clave "demo") ---------- */
+  if (!window.lightdm) {
+    let usuarioPrueba = null;
+    window.lightdm = {
+      users: Object.keys(window.G5_USUARIOS || { usuario1: 1, usuario2: 1 }).map(u => ({ username: u, display_name: u })),
+      sessions: [{ key: "sway", name: "Sway" }], default_session: "sway",
+      can_suspend: true, can_restart: true, can_shutdown: true, is_authenticated: false,
+      authenticate(u) { usuarioPrueba = u; setTimeout(() => window.show_prompt("Password: ", "password"), 50); },
+      respond(c) { setTimeout(() => { this.is_authenticated = c === "demo"; window.authentication_complete(); }, 900); },
+      cancel_authentication() {}, start_session_sync() { document.body.style.opacity = ".3"; },
+      suspend() {}, restart() {}, shutdown() {}
+    };
+  }
+  const L = window.lightdm;
+
+  /* ---------- Usuarios: usuarios.js decide nombres, fotos, colores y lado ---------- */
+  const CONF = window.G5_USUARIOS || {};
+  const existentes = (L.users || []).map(u => u.username);
+  let izq = null, der = null;
+  for (const [usuario, c] of Object.entries(CONF)) {
+    if (!existentes.includes(usuario)) continue;
+    const u = Object.assign({ usuario, nombre: usuario, detalle: "", foto: "", color: "#9a86cf", resalte: "#ffffff" }, c);
+    if (c.lado === "izquierda" && !izq) izq = u; else if (!der) der = u; else if (!izq) izq = u;
+  }
+  // Sin configuración: los dos primeros usuarios del sistema
+  for (const u of L.users || []) {
+    if (izq && der) break;
+    if ((izq && izq.usuario === u.username) || (der && der.usuario === u.username)) continue;
+    const x = { usuario: u.username, nombre: u.display_name || u.username, detalle: "" };
+    // Sin foto propia: los dibujos de ejemplo (el instalador siempre los copia)
+    if (!der) der = Object.assign(x, { foto: "campo.png", color: "#5ea23a", resalte: "#ffde00" });
+    else izq = Object.assign(x, { foto: "montanas.png", color: "#9a86cf", resalte: "#e7e1f6" });
+  }
+  const LADOS = { izq, der };
+
+  const COLOR_OK = /^#[0-9a-fA-F]{3,8}$/;
+  const color = (c, def) => (typeof c === "string" && COLOR_OK.test(c) ? c : def);
+  const FOTO_OK = /^[A-Za-z0-9._-]+\.(jpe?g|png|webp)$/;
+
+  function armarTarjeta(lado, u) {
+    const t = $(lado === "izq" ? "tarjIzq" : "tarjDer");
+    if (!u) { $(lado).style.background = "#15141a"; t.hidden = true; return; }
+    if (u.tinte) $(lado).querySelector(".tinte").style.background = color(u.color, "transparent");
+    const brillo = Number(u.brillo);
+    if (brillo >= 0.5 && brillo <= 2) $(lado).querySelector(".foto").style.filter = `brightness(${brillo})`;
+    if (typeof u.encuadre === "string" && /^[0-9]{1,3}% [0-9]{1,3}%$/.test(u.encuadre)) $(lado).querySelector(".foto").style.backgroundPosition = u.encuadre;
+    if (FOTO_OK.test(u.foto)) $(lado).querySelector(".foto").style.backgroundImage = `url("${u.foto}")`;
+    else $(lado).querySelector(".foto").style.background = `linear-gradient(135deg, ${color(u.color, "#555")}, #111)`;
+    t.innerHTML = `<div class="nombre"></div><div class="detalle"></div>
+      <div class="aro">
+        <svg viewBox="0 0 210 210" aria-hidden="true">
+          <circle class="fondo" cx="105" cy="105" r="88"/>
+          <circle class="color" cx="105" cy="105" r="88"/>
+          <g class="chispas"></g>
+          <circle class="gira" cx="105" cy="105" r="88"/>
+        </svg>
+        <div class="texto"></div>
+      </div>`;
+    t.querySelector(".nombre").textContent = u.nombre;
+    t.querySelector(".detalle").textContent = u.detalle;
+    t.querySelector(".color").style.stroke = color(u.color, "#9a86cf");
+    t.querySelector(".gira").style.stroke = color(u.resalte, "#ffffff");
+    t.addEventListener("click", () => elegir(lado));
+  }
+  armarTarjeta("izq", izq);
+  armarTarjeta("der", der);
+  ["izq", "der"].forEach(l => $(l).addEventListener("click", () => elegir(l)));
+
+  /* ---------- Diagonal y bordes resaltados ---------- */
+  function geometria() {
+    const w = innerWidth, h = innerHeight, a = w * 0.54, b = w * 0.46, m = 4;
+    $("bordes").setAttribute("viewBox", `0 0 ${w} ${h}`);
+    $("bordeIzq").setAttribute("points", `${m},${m} ${a - m},${m} ${b - m},${h - m} ${m},${h - m}`);
+    $("bordeDer").setAttribute("points", `${a + m},${m} ${w - m},${m} ${w - m},${h - m} ${b + m},${h - m}`);
+    const d = $("diagonal");
+    d.setAttribute("x1", a); d.setAttribute("y1", 0); d.setAttribute("x2", b); d.setAttribute("y2", h);
+  }
+  addEventListener("resize", geometria);
+  geometria();
+  if (izq) $("bordeIzq").style.stroke = color(izq.color, "#9a86cf");
+  if (der) $("bordeDer").style.stroke = color(der.color, "#5ea23a");
+
+  /* ---------- Elegir usuario ---------- */
+  let actual = null;
+  let estado = "esperando";   // esperando | escribiendo | verificando
+  function textoAro(t, sub) {
+    const el = document.querySelector(`#${actual === "izq" ? "tarjIzq" : "tarjDer"} .texto`);
+    if (!el) return;
+    el.textContent = t;
+    if (sub) { const s = document.createElement("small"); s.textContent = sub; el.appendChild(s); }
+  }
+  function elegir(lado) {
+    if (!LADOS[lado] || estado === "verificando") return;
+    if (lado !== actual) {
+      actual = lado;
+      ["izq", "der"].forEach(l => {
+        const on = l === lado;
+        $(l).classList.toggle("activo", on); $(l).classList.toggle("apagado", !on);
+        $(l === "izq" ? "tarjIzq" : "tarjDer").classList.toggle("apagado", !on);
+        $(l === "izq" ? "bordeIzq" : "bordeDer").classList.toggle("activo", on);
+      });
+      document.querySelectorAll(".aro .texto").forEach(el => { el.textContent = ""; });
+      $("clave").value = "";
+      textoAro("Escribí tu clave", "y apretá Enter");
+      try { L.cancel_authentication(); } catch (e) {}
+      L.authenticate(LADOS[lado].usuario);
+      try { localStorage.setItem("g5-ultimo", lado); } catch (e) {}
+    }
+    $("clave").focus();
+  }
+
+  /* ---------- Aro de la contraseña, como swaylock ---------- */
+  const R = 88, LARGO = 2 * Math.PI * R;
+  function chispa(colorChispa) {
+    const g = document.querySelector(`#${actual === "izq" ? "tarjIzq" : "tarjDer"} .chispas`);
+    if (!g) return;
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", 105); c.setAttribute("cy", 105); c.setAttribute("r", R);
+    c.setAttribute("class", "chispa");
+    const tramo = LARGO / 7, inicio = Math.random() * LARGO;
+    c.style.stroke = colorChispa;
+    c.style.strokeDasharray = `${tramo} ${LARGO}`;
+    c.style.strokeDashoffset = String(-inicio);
+    c.style.transition = "opacity .5s ease";
+    g.appendChild(c);
+    setTimeout(() => { c.style.opacity = "0"; }, 250);
+    setTimeout(() => c.remove(), 800);
+  }
+  $("clave").addEventListener("input", (e) => {
+    if (!actual || estado === "verificando") return;
+    estado = "escribiendo";
+    textoAro("");
+    const u = LADOS[actual];
+    chispa(e.inputType === "deleteContentBackward" ? "#e0483e" : color(u.resalte, "#ffffff"));
+    if (!$("clave").value) { estado = "esperando"; textoAro("Escribí tu clave", "y apretá Enter"); }
+  });
+
+  let pidioClave = false;
+  window.show_prompt = function () { pidioClave = true; };
+  window.show_message = function (texto) { if (actual && texto) textoAro(String(texto).slice(0, 60)); };
+  window.authentication_complete = function () {
+    const aro = document.querySelector(`#${actual === "izq" ? "tarjIzq" : "tarjDer"} .aro`);
+    aro.classList.remove("verificando");
+    if (L.is_authenticated) {
+      textoAro("¡Adelante!");
+      const ses = (L.sessions || []).find(s => s.key === "sway") || (L.sessions || [])[0];
+      setTimeout(() => L.start_session_sync(ses ? ses.key : L.default_session), 300);
+      return;
+    }
+    estado = "esperando";
+    $("clave").value = "";
+    aro.classList.remove("error"); void aro.offsetWidth; aro.classList.add("error");
+    textoAro("Clave incorrecta", "probá de nuevo");
+    pidioClave = false;
+    L.authenticate(LADOS[actual].usuario);   // arranca un intento nuevo
+  };
+
+  function entrar() {
+    if (!actual || estado === "verificando" || !$("clave").value) return;
+    estado = "verificando";
+    const aro = document.querySelector(`#${actual === "izq" ? "tarjIzq" : "tarjDer"} .aro`);
+    aro.classList.remove("error"); aro.classList.add("verificando");
+    textoAro("Verificando…");
+    const clave = $("clave").value;
+    const responder = () => L.respond(clave);
+    if (pidioClave) responder(); else setTimeout(responder, 400);
+  }
+
+  /* ---------- Teclado ---------- */
+  let superApretado = false;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Meta" || e.key === "Super" || e.key === "OS") superApretado = true;
+    const flecha = e.key === "ArrowLeft" ? "izq" : e.key === "ArrowRight" ? "der" : null;
+    if (flecha && (superApretado || e.metaKey || !$("clave").value)) { e.preventDefault(); elegir(flecha); return; }
+    if (e.key === "Tab") { e.preventDefault(); elegir(actual === "izq" ? "der" : "izq"); return; }
+    if (e.key === "Enter") { e.preventDefault(); entrar(); return; }
+    if (e.key === "Escape") { $("clave").value = ""; estado = "esperando"; textoAro("Escribí tu clave", "y apretá Enter"); }
+    if (document.activeElement !== $("clave")) $("clave").focus();
+  });
+  document.addEventListener("keyup", (e) => { if (e.key === "Meta" || e.key === "Super" || e.key === "OS") superApretado = false; });
+  document.addEventListener("click", () => $("clave").focus());
+
+  /* ---------- Hora ---------- */
+  const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  function tick() {
+    const d = new Date();
+    $("hora").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    $("fecha").textContent = `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
+  }
+  tick(); setInterval(tick, 5000);
+
+  /* ---------- Energía: dos toques para confirmar ---------- */
+  function dosToques(id, puede, accion, texto) {
+    const b = $(id);
+    if (!puede) { b.hidden = true; return; }
+    let armado = null;
+    const original = b.innerHTML;
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (armado) { clearTimeout(armado); accion(); return; }
+      b.classList.add("armado"); b.lastChild.textContent = texto;
+      armado = setTimeout(() => { armado = null; b.classList.remove("armado"); b.innerHTML = original; }, 3000);
+    });
+  }
+  dosToques("suspender", L.can_suspend, () => L.suspend(), "¿Seguro?");
+  dosToques("reiniciar", L.can_restart, () => L.restart(), "¿Seguro?");
+  dosToques("apagar", L.can_shutdown, () => L.shutdown(), "¿Seguro?");
+
+  /* ---------- Arranque: el último usuario elegido, o el de la derecha ---------- */
+  let inicial = null;
+  try { inicial = localStorage.getItem("g5-ultimo"); } catch (e) {}
+  if (/[#&]izq/.test(location.hash)) inicial = "izq";   // para sacar capturas
+  elegir(LADOS[inicial] ? inicial : (der ? "der" : "izq"));
+})();
+</script>
+</body>
+</html>

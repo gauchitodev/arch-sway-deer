@@ -26,6 +26,10 @@ pantalla táctil.
 
 Pantalla de bloqueo (al suspender o con `Super+Shift+X`): la cosechadora de fondo y el círculo en verde G5.
 
+![Pantalla de login](capturas/7-login.png)
+
+Pantalla de login (opcional) para compus con dos usuarios: cada uno de un lado de la diagonal.
+
 ## Qué trae
 
 - **Barra de arriba** (Waybar) con el estilo de la barra de título de la G5:
@@ -56,6 +60,9 @@ Pantalla de bloqueo (al suspender o con `Super+Shift+X`): la cosechadora de fond
   cuentas arriba y anda con el teclado numérico. Sigue el modo día o noche de la pantalla de inicio.
   El teclado numérico arranca con Bloq Num prendido.
 - Fondo de pantalla y pantalla de bloqueo con fotos propias de una S770 en cosecha.
+- **Pantalla de login** opcional (tema para LightDM): dos usuarios a los lados de una diagonal, cada uno con
+  su foto y su color. Se elige con el dedo, el mouse o `Super+flechas`, y la clave usa el mismo aro que el
+  bloqueo. Suspender, reiniciar y apagar abajo.
 
 ## Requisitos
 
@@ -96,6 +103,37 @@ Se puede correr las veces que quieras.
 | Adelantar un tema | arrastrar la barra del panel de música |
 | Menú de apps | botón verde **Menú** (se cierra con la X amarilla o Esc) |
 | Calculadora | tecla de calculadora (otra vez la cierra); Ctrl+C copia el resultado |
+
+## Pantalla de login (opcional)
+
+Necesita LightDM con el greeter webkit2:
+
+```
+sudo pacman -S lightdm lightdm-webkit2-greeter
+```
+
+Para poner tus usuarios, fotos y colores:
+
+```
+mkdir -p ~/.config/g5/local/greeter
+cp ~/.config/g5/greeter/usuarios.ejemplo.js ~/.config/g5/local/greeter/usuarios.js
+```
+
+Editá ese archivo (cambiá `usuario1`/`usuario2` por los nombres de usuario reales) y copiá tus fotos a
+la misma carpeta. Después:
+
+```
+sudo ~/.config/g5/greeter/instalar.sh
+```
+
+Sin `usuarios.js` propio muestra los dos primeros usuarios del sistema con los dibujos de ejemplo
+(`greeter/ejemplo/`); a quien no configures también le tocan esos. Para probarlo sin cerrar sesión,
+abrí `greeter/index.html` en Chromium: tiene un modo prueba (la clave es `demo`).
+Para volver al login de antes:
+
+```
+sudo rm /etc/lightdm/lightdm.conf.d/50-arch-sway-deer.conf && sudo systemctl restart lightdm
+```
 
 ## Panel del bot (opcional)
 
