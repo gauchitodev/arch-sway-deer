@@ -10,6 +10,7 @@ import json
 import os
 import re
 import secrets
+import shlex
 import socket
 import struct
 import subprocess
@@ -610,6 +611,7 @@ def apps():
                     "categorias": [x for x in c.get("Categories", "").split(";") if x],
                     "terminal": c.get("Terminal", "").lower() == "true",
                     "exec": c["Exec"],
+                    "icono": icono_archivo(c.get("Icon", "")),
                 }
     return encontradas
 
@@ -627,6 +629,126 @@ def lanzar_app(ident):
         cmd = "gtk-launch " + ident[:-len(".desktop")]
     subprocess.Popen(["swaymsg", "exec", "--", cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return True
+
+
+# Íconos propios de las apps (los de las apps web: Gmail, Deere...). Solo imágenes que
+# estén en las carpetas de íconos; el resto de las apps usa el dibujo del menú.
+CARPETAS_ICONOS = [os.path.realpath(os.path.expanduser(c)) for c in
+                   ("~/.local/share/icons", "/usr/share/icons", "/usr/share/pixmaps")]
+TIPOS_ICONO = {".png": "image/png", ".svg": "image/svg+xml", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
+
+
+def icono_archivo(icon):
+    """Ruta del ícono si el .desktop apunta a una imagen válida, si no None."""
+    if not icon.startswith("/"):
+        return None
+    ruta = os.path.realpath(icon)
+    if os.path.splitext(ruta)[1].lower() not in TIPOS_ICONO:
+        return None
+    if not any(ruta.startswith(c + os.sep) for c in CARPETAS_ICONOS):
+        return None
+    try:
+        if not 0 < os.path.getsize(ruta) <= 2_000_000:
+            return None
+    except OSError:
+        return None
+    return ruta
+
+
+# ---------- Paneles web (local/config.json → "web") ----------
+# Cada panel tiene botones que abren direcciones fijas de la config, con la misma
+# app web (.desktop) que dice "app": mismo perfil del navegador y mismas opciones.
+
+def _web_leer():
+    paneles = {}
+    for w in CONFIG.get("web") or []:
+        if not isinstance(w, dict):
+            continue
+        ident = w.get("id")
+        if not isinstance(ident, str) or not re.fullmatch(r"[a-z]{1,17}", ident) or ident in paneles:
+            continue
+        enlaces = [{"nombre": e["nombre"][:30], "url": e["url"]} for e in (w.get("enlaces") or [])
+                   if isinstance(e, dict) and isinstance(e.get("nombre"), str) and isinstance(e.get("url"), str)
+                   and re.fullmatch(r"https://[^\s\"'<>]+", e["url"])][:8]
+        arch = w.get("archivos") if isinstance(w.get("archivos"), dict) else None
+        if arch:
+            try:
+                patron = re.compile(str(arch.get("patron", ".")), re.I)
+            except re.error:
+                patron = None
+            carpetas = [os.path.expanduser(c) for c in arch.get("carpetas", []) if isinstance(c, str)][:4]
+            arch = {"titulo": str(arch.get("titulo") or "Archivos")[:40], "patron": patron,
+                    "carpetas": carpetas, "dias": max(1, min(365, arch["dias"])) if type(arch.get("dias")) is int else 30} \
+                if patron and carpetas else None
+        paneles[ident] = {"id": ident, "titulo": str(w.get("titulo") or ident)[:30],
+                          "app": w.get("app") if isinstance(w.get("app"), str) else None,
+                          "enlaces": enlaces, "archivos": arch}
+    return paneles
+
+
+WEB = _web_leer()
+
+
+def web_lista():
+    todas = apps()
+    return [{"id": w["id"], "titulo": w["titulo"],
+             "icono": w["app"] if w["app"] in todas and todas[w["app"]]["icono"] else None,
+             "enlaces": [e["nombre"] for e in w["enlaces"]],
+             "archivos": w["archivos"]["titulo"] if w["archivos"] else None} for w in WEB.values()]
+
+
+def web_archivos(ident):
+    """Los últimos archivos que coinciden con el patrón (solo nombre, fecha y tamaño)."""
+    w = WEB.get(ident)
+    if not w or not w["archivos"]:
+        return None
+    a, hallados = w["archivos"], []
+    limite = time.time() - a["dias"] * 86400
+    for carpeta in a["carpetas"]:
+        try:
+            with os.scandir(carpeta) as it:
+                for f in it:
+                    if f.is_file(follow_symlinks=False) and a["patron"].search(f.name):
+                        st = f.stat(follow_symlinks=False)
+                        if st.st_mtime >= limite:
+                            hallados.append((st.st_mtime, f.name, st.st_size, f.path))
+        except OSError:
+            continue
+    hallados.sort(reverse=True)
+    return hallados[:6]
+
+
+def web_abrir(ident, n):
+    w = WEB.get(ident)
+    if not w or not isinstance(n, int) or isinstance(n, bool) or not 0 <= n < len(w["enlaces"]):
+        return False
+    url = w["enlaces"][n]["url"]
+    app = apps().get(w["app"]) if w["app"] else None
+    argv = ["chromium", "--app=" + url]
+    if app and not app["terminal"]:
+        try:
+            argv = [x for x in shlex.split(app["exec"]) if not re.fullmatch(r"%[fFuUdDnNickvm]", x)]
+        except ValueError:
+            pass
+        else:
+            i = next((i for i, x in enumerate(argv) if x.startswith("--app=")), None)
+            if i is None:
+                argv.append(url)
+            else:
+                argv[i] = "--app=" + url
+    subprocess.run(["swaymsg", "workspace", "back_and_forth"], capture_output=True)
+    subprocess.Popen(["swaymsg", "exec", "--", shlex.join(argv)],
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return True
+
+
+def web_copiar(ident, nombre):
+    """Copia la ruta completa de uno de los archivos listados (para pegarla al subirlo)."""
+    for _, n, _, ruta in web_archivos(ident) or []:
+        if n == nombre:
+            subprocess.run(["wl-copy", "--", ruta], capture_output=True, timeout=3)
+            return True
+    return False
 
 
 # ---------- Huevo de pascua ----------
@@ -787,6 +909,20 @@ class Manejador(BaseHTTPRequestHandler):
                     return self._responder(200, f.read(), "image/jpeg")
             except OSError:
                 return self._responder(404, {"error": "sin fondo"})
+        if self.path.startswith("/icono?"):
+            # Las imágenes no mandan encabezados: la clave va en la dirección
+            q = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+            if q.get("t", [""])[0] != TOKEN:
+                return self._responder(403, {"error": "no autorizado"})
+            app = apps().get(q.get("app", [""])[0])
+            ruta = app and app["icono"]
+            if not ruta:
+                return self._responder(404, {"error": "sin ícono"})
+            try:
+                with open(ruta, "rb") as f:
+                    return self._responder(200, f.read(), TIPOS_ICONO[os.path.splitext(ruta)[1].lower()])
+            except OSError:
+                return self._responder(404, {"error": "sin ícono"})
         if self.path.startswith("/api/") and not self._token_ok():
             # Clave vieja (el servidor se reinició): la página se recarga sola.
             return self._responder(403, {"error": "no autorizado"})
@@ -813,8 +949,17 @@ class Manejador(BaseHTTPRequestHandler):
             canales = e.get("yt_canales", [])
             return self._responder(200, {"canales": canales, "videos": yt_videos(canales)})
         if self.path == "/api/apps" and self._token_ok():
-            lista = [{k: a[k] for k in ("id", "nombre", "categorias")} for a in apps().values()]
+            lista = [{"id": a["id"], "nombre": a["nombre"], "categorias": a["categorias"], "icono": bool(a["icono"])}
+                     for a in apps().values()]
             return self._responder(200, sorted(lista, key=lambda a: a["nombre"].lower()))
+        if self.path == "/api/web" and self._token_ok():
+            return self._responder(200, web_lista())
+        if self.path.startswith("/api/web/archivos?") and self._token_ok():
+            ident = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("id", [""])[0]
+            lista = web_archivos(ident)
+            if lista is None:
+                return self._responder(404, {"error": "no existe"})
+            return self._responder(200, [{"nombre": n, "fecha": round(t), "tam": tam} for t, n, tam, _ in lista])
         self._responder(404, {"error": "no existe"})
 
     def do_POST(self):
@@ -880,6 +1025,12 @@ class Manejador(BaseHTTPRequestHandler):
         if self.path == "/api/bluetooth":
             ok = bt_accion(cuerpo.get("que"), cuerpo.get("mac"))
             return self._responder(200 if ok else 409, {"ok": ok})
+        if self.path == "/api/web/abrir":
+            ok = web_abrir(cuerpo.get("id"), cuerpo.get("n"))
+            return self._responder(200 if ok else 404, {"ok": ok})
+        if self.path == "/api/web/copiar":
+            ok = web_copiar(cuerpo.get("id"), cuerpo.get("nombre"))
+            return self._responder(200 if ok else 404, {"ok": ok})
         if self.path == "/api/lanzar" and cuerpo.get("que") in LANZADORES:
             lanzar(cuerpo["que"])
             return self._responder(200, {"ok": True})

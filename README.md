@@ -13,12 +13,12 @@ pantalla táctil.
 
 ![Escritorio con la barra G5](capturas/0-escritorio.png)
 
-![Página de trabajo en modo noche](capturas/1-pagina-de-trabajo.png)
+![Run Page en modo noche](capturas/1-pagina-de-trabajo.png)
 
 | | |
 |---|---|
 | ![Reloj, música, notas, mapa y YouTube](capturas/2-reloj-musica-mapa-youtube.png) | ![Menú de apps](capturas/3-menu-de-apps.png) |
-| Segunda página: reloj, música, notas, mapa y últimos videos | Menú de apps estilo G5 |
+| Segunda Run Page: reloj, música, notas, mapa y últimos videos | Menú de apps estilo G5 |
 | ![Modo día](capturas/4-modo-dia.png) | ![Panel de Bluetooth](capturas/5-bluetooth.png) |
 | Modo día | Panel de Bluetooth: prender, conectar y vincular con el dedo |
 
@@ -41,7 +41,7 @@ Pantalla de login (opcional) para compus con dos usuarios: cada uno de un lado d
 - **Apps GTK** (el selector de archivos al descargar o guardar, el control de volumen, etc.) con barra de título
   verde, lo seleccionado en amarillo y el botón de confirmar resaltado.
 - **Pantalla de inicio** (`Super+G`), pensada para el dedo:
-  - **Páginas de trabajo** con paneles libres: en **Editar** los arrastrás a donde quieras y los agrandás
+  - **Run Pages** (como les dice el monitor) con paneles libres: en **Editar** los arrastrás a donde quieras y los agrandás
     desde la esquina amarilla (con el dedo o el mouse), con imán cada 16 px para que queden alineados.
     Mientras editás, la bandeja amarilla ocupa el lugar de la barra de abajo, así la página no se mueve:
     lo que ves es lo que queda.
@@ -53,7 +53,9 @@ Pantalla de login (opcional) para compus con dos usuarios: cada uno de un lado d
     **Bluetooth** (prender/apagar, conectar tus aparatos, ver su batería y vincular nuevos), disco, reloj,
     **música** (lo que suena en YouTube / YouTube Music, con barra para adelantar, volumen y la portada de fondo),
     mapa, últimos videos de YouTube, notas y el estado de un bot que corre en otro equipo por SSH.
-  - **Menú de apps** estilo G5: Favoritas, Todas las apps y Sistema (apagar y reiniciar piden dos toques).
+  - **Paneles web** que armás vos: el logo de una app web y botones que abren secciones fijas de ese sitio,
+    más (si querés) la lista de los últimos archivos descargados que coinciden con un nombre.
+  - **Menú de apps** estilo G5 (las apps web muestran su propio logo): Favoritas, Todas las apps y Sistema (apagar y reiniciar piden dos toques).
   - Modo **día** y **noche** (el cambio se funde suave), y un **bip** al tocar los botones, como el monitor.
 - **Calculadora G5** en la tecla de calculadora del teclado (la que está arriba del teclado numérico):
   visor verde azulado, operaciones en amarillo, coma decimal y punto de miles como en Uruguay, las últimas
@@ -154,6 +156,34 @@ Se configura en `local/config.json`, que no se sube al repo:
 
 El `comando` corre en el otro equipo: tiene que salir con `0` si el bot anda (y puede imprimir cuántos
 segundos lleva andando) y con `1` si está detenido. Hace falta entrar por SSH **con llave**, sin contraseña.
+
+## Paneles web (opcional)
+
+Cada panel muestra el logo de una app web (un `.desktop` con `Icon=` apuntando a una imagen en
+`~/.local/share/icons`) y botones que abren direcciones fijas **con esa misma app**: mismo perfil del
+navegador y mismas opciones de su `Exec=`, cambiando solo el `--app=`. Se configuran en `local/config.json`:
+
+```json
+{
+  "web": [
+    {
+      "id": "correo",
+      "titulo": "Correo",
+      "app": "gmail.desktop",
+      "enlaces": [
+        { "nombre": "Bandeja de entrada", "url": "https://mail.google.com/mail/" },
+        { "nombre": "Redactar", "url": "https://mail.google.com/mail/?view=cm" }
+      ],
+      "archivos": { "titulo": "Últimas descargas", "carpetas": ["~/Downloads"], "patron": "\\.(pdf|zip)$", "dias": 7 }
+    }
+  ]
+}
+```
+
+- `id`: solo letras minúsculas (hasta 17). Aparece en **Editar → + Agregar panel** con el `titulo`.
+- `enlaces`: hasta 8, solo `https://`. El primero sale resaltado.
+- `archivos` (opcional): los últimos 6 archivos de esas carpetas cuyo nombre coincide con `patron`.
+  Tocar uno copia su ruta: en la ventana de subir archivos, `Ctrl+L` y pegar.
 
 ## Capturas sin datos personales
 

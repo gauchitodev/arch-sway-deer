@@ -98,7 +98,7 @@
   .tray .danger { background: var(--crit); color: #fff; border-color: #8e1f1a; }
   .tray .done { margin-left: auto; background: var(--green); color: #fff; border-color: var(--green-deep); }
 
-  /* Página de trabajo */
+  /* Run Page (así les dice el monitor de Deere) */
   .run { grid-row: 3; display: grid; grid-template-columns: 1fr 270px; min-height: 0; }
   .modules { padding: 18px; overflow: hidden; position: relative; min-height: 0; }
   /* Lienzo libre: cada panel guarda su lugar y tamaño en fracciones del lienzo */
@@ -124,7 +124,7 @@
   .mod.g .bars { height: 120px; gap: 12px; }
   .mod.g .bars i { width: 34px; }
 
-  /* Barra de páginas */
+  /* Barra de Run Pages */
   .pagebar {
     grid-row: 2; display: flex; align-items: stretch; min-height: 54px;
     background: var(--bar-glass); backdrop-filter: blur(8px); border-bottom: 1px solid var(--tile-edge);
@@ -240,6 +240,25 @@
   .mus-ctl .mus-vol { flex: 1; min-width: 0; margin-left: 6px; }
   .mod.s .mus-ctl .mus-abrir { display: none; }
 
+  /* Paneles web (Operations Center, Files...) */
+  .web { display: flex; gap: 12px; align-items: center; min-width: 0; }
+  .web-logo img { width: 52px; height: 52px; object-fit: contain; border-radius: 8px; display: block; }
+  .mod.g .web-logo img { width: 72px; height: 72px; }
+  .web-botones { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 0; }
+  .web-botones .chip { flex: 1 1 auto; }
+  .web-botones .chip.prin { background: var(--green); color: #fff; border-color: var(--green-deep); }
+  .web-arch { display: grid; gap: 6px; min-height: 0; }
+  .web-arch-tit { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; border-top: 1px solid var(--tile-edge); padding-top: 8px; }
+  .web-arch-lista { display: grid; gap: 6px; }
+  .arch {
+    display: grid; gap: 2px; text-align: left; cursor: pointer; padding: 8px 10px; border-radius: 4px; min-width: 0;
+    background: var(--tile-top); color: var(--ink); border: 1px solid var(--tile-edge); font: 600 14px var(--font);
+  }
+  .arch span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .arch em { font-style: normal; font-size: 12px; color: var(--muted); }
+  .arch.copiado { border-color: var(--green); }
+  .arch.copiado em { color: var(--green-bright); }
+  .mod.s .web-arch { display: none; }
   .mapa-wrap { border-radius: 3px; overflow: hidden; border: 1px solid var(--tile-edge); min-height: 60px; }
   /* Mapa y notas llenan el panel, sea del tamaño que sea */
   .mod[data-k="mapa"] .body { grid-template-rows: 1fr; grid-auto-rows: auto; align-content: stretch; }
@@ -392,6 +411,7 @@
     background: linear-gradient(90deg, var(--green), var(--green-bright));
   }
   .tile .ico svg { width: 46px; height: 46px; margin-bottom: 8px; }
+  .tile .ico img.logo { width: 56px; height: 56px; object-fit: contain; margin-bottom: 8px; border-radius: 6px; }
   .tile:active .ico { transform: scale(.96); border-color: var(--green); }
   .tile.peligro .ico::after { background: var(--crit); }
   .tile.armado .ico { border: 2px solid var(--crit); }
@@ -452,17 +472,17 @@
   <div class="tray" id="tray" hidden>
     <span class="tray-tit">Editando</span>
     <button type="button" id="addBtn" aria-expanded="false" aria-controls="trayItems">+ Agregar panel</button>
-    <button type="button" id="newPage">+ Nueva página</button>
-    <button type="button" id="delPage" class="danger">Borrar esta página</button>
+    <button type="button" id="newPage">+ Nueva Run Page</button>
+    <button type="button" id="delPage" class="danger">Borrar esta Run Page</button>
     <button type="button" id="reset">Volver al original</button>
     <button type="button" class="done" id="done">Listo</button>
     <div class="tray-lista" id="trayItems" hidden></div>
   </div>
 
   <div class="pagebar" id="pagebar" hidden>
-    <button type="button" id="pgPrev" aria-label="Página anterior">◀</button>
-    <div class="pgname"><b id="pgName">Página de trabajo 1</b><span id="pgDots"></span></div>
-    <button type="button" id="pgNext" aria-label="Página siguiente">▶</button>
+    <button type="button" id="pgPrev" aria-label="Run Page anterior">◀</button>
+    <div class="pgname"><b id="pgName">Run Page 1</b><span id="pgDots"></span></div>
+    <button type="button" id="pgNext" aria-label="Run Page siguiente">▶</button>
   </div>
 
   <main class="run" id="viewRun">
@@ -613,6 +633,32 @@
     notas:  { name: "Notas", html: `<textarea class="notas" id="notas" spellcheck="false" placeholder="Escribí acá. Se guarda solo."></textarea><div class="sub" id="notasSub">Guardado</div>` },
     vol:    { name: "Volumen", html: `<div class="big"><span id="vol">—</span><small>%</small></div><div class="gauge"><i id="volG"></i></div><div class="sub" id="volSub"></div>` }
   };
+  // Paneles web: salen de local/config.json ("web"), por ejemplo Operations Center y Files
+  function registrarWeb(lista) {
+    lista.forEach(w => {
+      MODS["web" + w.id] = { name: w.titulo, html: `<div class="web">
+        ${w.icono ? `<div class="web-logo">${iconoImg(w.icono)}</div>` : ""}
+        <div class="web-botones">${w.enlaces.map((n, i) => `<button type="button" class="chip${i ? "" : " prin"}" data-web="${esc(w.id)}" data-n="${i}">${esc(n)}</button>`).join("")}</div></div>
+        ${w.archivos ? `<div class="web-arch" data-webarch="${esc(w.id)}"><div class="web-arch-tit">${esc(w.archivos)}</div><div class="web-arch-lista"><div class="sub">Buscando…</div></div></div>` : ""}` };
+    });
+  }
+  const fechaCorta = (seg) => {
+    const d = new Date(seg * 1000), hoy = new Date();
+    const hm = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    return d.toDateString() === hoy.toDateString() ? "hoy " + hm : `${d.getDate()}/${d.getMonth() + 1} ${hm}`;
+  };
+  const tamCorto = (b) => b < 1e6 ? Math.max(1, Math.round(b / 1e3)) + " KB" : (b / 1e6).toFixed(1) + " MB";
+  function cargarArchivos() {
+    document.querySelectorAll("[data-webarch]").forEach(box => {
+      api("/api/web/archivos?id=" + encodeURIComponent(box.dataset.webarch)).then(l => {
+        const lista = box.querySelector(".web-arch-lista"); if (!lista || !Array.isArray(l)) return;
+        lista.innerHTML = l.length ? l.map(a => `<button type="button" class="arch" data-arch="${esc(a.nombre)}" title="Tocá para copiar la ruta">
+            <span>${esc(a.nombre)}</span><em>${fechaCorta(a.fecha)} · ${tamCorto(a.tam)}</em></button>`).join("")
+          : '<div class="sub">No hay archivos nuevos en Descargas.</div>';
+      }).catch(() => {});
+    });
+  }
+  setInterval(() => { if (vista === "run" && !editing) cargarArchivos(); }, 30000);
   const TAM = ["s", "m", "g"];
   const DEFAULT = () => [{ paneles: [
     ["amfbot", "s"], ["cpu", "m"], ["ram", "s"],
@@ -675,6 +721,17 @@
     if (b.dataset.vid && !editing) { api("/api/video", { id: b.dataset.vid }).catch(() => {}); return; }
     if (b.dataset.mus) { api("/api/musica", { accion: b.dataset.mus }).then(actualizar).catch(() => {}); return; }
     if (b.id === "musMute") { api("/api/musica", { accion: "silencio" }).then(actualizar).catch(() => {}); return; }
+    if (b.dataset.web && !editing) { api("/api/web/abrir", { id: b.dataset.web, n: Number(b.dataset.n) }).catch(() => {}); return; }
+    if (b.dataset.arch && !editing) {
+      const id = b.closest("[data-webarch]").dataset.webarch;
+      api("/api/web/copiar", { id, nombre: b.dataset.arch }).then(r => {
+        if (!r.ok) return;
+        const em = b.querySelector("em"), antes = em.textContent;
+        em.textContent = "Ruta copiada: pegala con Ctrl+L al subir"; b.classList.add("copiado");
+        setTimeout(() => { em.textContent = antes; b.classList.remove("copiado"); }, 3500);
+      }).catch(() => {});
+      return;
+    }
     if (b.dataset.abrir && !editing) { api("/api/lanzar", { que: b.dataset.abrir }).catch(() => {}); return; }
     if (b.id === "mapaGuardar") {
       const v = $("mapaInput").value.trim(); if (!v) return;
@@ -810,21 +867,21 @@
         <div class="edit-ctl"><button type="button" class="rm" data-rm aria-label="Quitar ${m.name}">✕</button></div>
         <div class="body">${m.html}</div>
         <span class="medida"></span><span class="tirador" aria-hidden="true"></span></div>`;
-    }).join("") : '<div class="hint">Página vacía. Tocá <b>Editar</b> y agregá paneles.</div>'}</div>`;
+    }).join("") : '<div class="hint">Run Page vacía. Tocá <b>Editar</b> y agregá paneles.</div>'}</div>`;
     $("lienzo").style.setProperty("--paso", PASO + "px");
     $("lienzo").querySelectorAll(".mod").forEach(el => ubicar(el, lista[Number(el.dataset.i)]));
 
     const off = Object.keys(MODS).filter(k => !lista.some(p => p.k === k));
     $("trayItems").innerHTML = off.length
       ? off.map(k => `<button type="button" data-add="${k}">+ ${MODS[k].name}</button>`).join(" ")
-      : "<span>Ya están todos en esta página.</span>";
+      : "<span>Ya están todos en esta Run Page.</span>";
 
     const varias = paginas.length > 1;
     $("pagebar").hidden = !varias;
     $("pgPrev").disabled = $("pgNext").disabled = !varias;
     $("delPage").hidden = !varias;
     $("pgDots").innerHTML = paginas.map((_, i) => `<i class="${i === pg ? "on" : ""}"></i>`).join("");
-    const titulo = `Página de trabajo ${pg + 1}`;
+    const titulo = `Run Page ${pg + 1}`;
     set("pgName", titulo);
     document.title = titulo;   // la barra de arriba muestra este nombre
     const ta = $("notas");
@@ -835,6 +892,7 @@
       $("mapaInput").value = mapaLugar;
     }
     if ($("ytLista")) cargarYT();
+    cargarArchivos();
     tickReloj();
     medirLienzo();
     if (ultimo) pintar(ultimo);
@@ -990,7 +1048,7 @@
   });
   // Borrar pide dos toques, para no borrar sin querer
   let armado = null;
-  function desarmarBorrar() { clearTimeout(armado); armado = null; $("delPage").textContent = "Borrar esta página"; }
+  function desarmarBorrar() { clearTimeout(armado); armado = null; $("delPage").textContent = "Borrar esta Run Page"; }
   $("delPage").addEventListener("click", () => {
     if (!armado) {
       $("delPage").textContent = "¿Seguro? Tocá de nuevo";
@@ -1047,6 +1105,7 @@
     bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
     bellOff: '<path d="M6 16V11a6 6 0 0 1 9-5.2M18 11v5l2 2H4"/><path d="M10 20a2 2 0 0 0 4 0M3 3l18 18"/>'
   };
+  const iconoImg = (id) => `<img class="logo" src="/icono?app=${encodeURIComponent(id)}&t=${TOKEN}" alt="">`;
   function iconoApp(a) {
     const c = a.categorias, id = a.id;
     if (/youtube(?!.*music)/i.test(id) && !/ytmusic/.test(id)) return "play";
@@ -1128,7 +1187,7 @@
         ? favoritas.map(id => appsLista.find(a => a.id === id)).filter(Boolean)
         : appsLista;
       html += lista.length ? lista.map(a => `<button type="button" class="tile" data-app="${esc(a.id)}">
-          <span class="ico">${svg(iconoApp(a))}</span><span class="lbl">${esc(a.nombre)}</span>
+          <span class="ico">${a.icono ? iconoImg(a.id) : svg(iconoApp(a))}</span><span class="lbl">${esc(a.nombre)}</span>
           <span class="estrella${favoritas.includes(a.id) ? " on" : ""}" data-star="${esc(a.id)}">★</span></button>`).join("")
         : '<div class="vacio">Todavía no hay favoritas. Entrá a <b>Todas las apps</b>, tocá <b>Editar</b> y marcá las estrellas.</div>';
     }
@@ -1476,7 +1535,7 @@
     }).catch(() => { $("offline").hidden = false; });
   }
 
-  api("/api/estado").then(e => {
+  api("/api/web").then(registrarWeb).catch(() => {}).then(() => api("/api/estado")).then(e => {
     const limpiar = (lista) => lista
       .filter(p => p && MODS[p.k])
       .map(p => {

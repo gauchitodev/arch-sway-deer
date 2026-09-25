@@ -1,11 +1,36 @@
 {
   "bot": null,
-
   "bot_ejemplo": {
     "nombre": "Mi bot",
     "dispositivo": "el celular",
     "destino": "usuario@192.168.1.50",
     "puerto": 8022,
     "comando": "pgrep -f mi-bot.js >/dev/null || exit 1"
-  }
+  },
+  "web": [],
+  "web_ejemplo": [
+    {
+      "id": "correo",
+      "titulo": "Correo",
+      "app": "gmail.desktop",
+      "enlaces": [
+        {
+          "nombre": "Bandeja de entrada",
+          "url": "https://mail.google.com/mail/"
+        },
+        {
+          "nombre": "Redactar",
+          "url": "https://mail.google.com/mail/?view=cm"
+        }
+      ],
+      "archivos": {
+        "titulo": "Últimas descargas",
+        "carpetas": [
+          "~/Downloads"
+        ],
+        "patron": "\\.(pdf|zip)$",
+        "dias": 7
+      }
+    }
+  ]
 }
