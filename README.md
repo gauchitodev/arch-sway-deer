@@ -26,7 +26,7 @@ pantalla táctil.
 
 Pantalla de bloqueo (al suspender o con `Super+Shift+X`): la cosechadora de fondo y el círculo en verde G5.
 
-![Pantalla de login](capturas/7-login.png)
+![Pantalla de login](capturas/7-seleccion-de-usuario.png)
 
 Pantalla de login (opcional) para compus con dos usuarios: cada uno de un lado de la diagonal.
 
