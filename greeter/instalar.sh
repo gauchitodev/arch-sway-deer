@@ -16,7 +16,7 @@ CONF=/etc/lightdm/lightdm-webkit2-greeter.conf
 rm -rf "$TEMA"
 install -d -m 755 "$TEMA"
 install -m 644 "$AQUI/index.html" "$TEMA/index.html"
-install -m 644 "$AQUI/ejemplo/campo.png" "$AQUI/ejemplo/montanas.png" "$TEMA/"
+install -m 644 "$G5/bloqueo.jpg" "$AQUI/ejemplo/montanas.png" "$TEMA/"
 if [ -f "$G5/local/greeter/usuarios.js" ]; then
     for f in "$G5/local/greeter/"*; do
         # Solo archivos comunes: nunca seguir enlaces (podrían apuntar a archivos del sistema)

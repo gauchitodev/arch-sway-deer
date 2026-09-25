@@ -126,8 +126,8 @@ la misma carpeta. Después:
 sudo ~/.config/g5/greeter/instalar.sh
 ```
 
-Sin `usuarios.js` propio muestra los dos primeros usuarios del sistema con los dibujos de ejemplo
-(`greeter/ejemplo/`); a quien no configures también le tocan esos. Para probarlo sin cerrar sesión,
+Sin `usuarios.js` propio muestra los dos primeros usuarios del sistema: uno con la S770 de la pantalla
+de bloqueo y el otro con un dibujo de ejemplo (`greeter/ejemplo/`). Para probarlo sin cerrar sesión,
 abrí `greeter/index.html` en Chromium: tiene un modo prueba (la clave es `demo`).
 Para volver al login de antes:
 

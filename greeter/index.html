@@ -141,8 +141,8 @@
     if (izq && der) break;
     if ((izq && izq.usuario === u.username) || (der && der.usuario === u.username)) continue;
     const x = { usuario: u.username, nombre: u.display_name || u.username, detalle: "" };
-    // Sin foto propia: los dibujos de ejemplo (el instalador siempre los copia)
-    if (!der) der = Object.assign(x, { foto: "campo.png", color: "#5ea23a", resalte: "#ffde00" });
+    // Sin foto propia: la S770 del repo y el dibujo de ejemplo (el instalador siempre los copia)
+    if (!der) der = Object.assign(x, { detalle: "S770 · cosecha", foto: "bloqueo.jpg", encuadre: "35% 60%", color: "#5ea23a", resalte: "#ffde00" });
     else izq = Object.assign(x, { foto: "montanas.png", color: "#9a86cf", resalte: "#e7e1f6" });
   }
   const LADOS = { izq, der };
