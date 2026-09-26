@@ -40,7 +40,9 @@ Pantalla de login (opcional) para compus con dos usuarios: cada uno de un lado d
 - **Colores de ventanas, lanzador de apps (wofi), notificaciones (mako) y pantalla de bloqueo** a juego.
 - **Apps GTK** (el selector de archivos al descargar o guardar, el control de volumen, etc.) con barra de título
   verde, lo seleccionado en amarillo y el botón de confirmar resaltado.
-- **Pantalla de inicio** (`Super+G`), pensada para el dedo:
+- **Pantalla de inicio** (`Super+G`), pensada para el dedo. Es una capa encima de tu escritorio, no un
+  escritorio aparte: al cerrarla quedás donde estabas, y se esconde sola si abrís una app o cambiás de escritorio.
+  Si volvés después de un rato, arranca en la primera Run Page:
   - **Run Pages** (como les dice el monitor) con paneles libres: en **Editar** los arrastrás a donde quieras y los agrandás
     desde la esquina amarilla (con el dedo o el mouse), con imán cada 16 px para que queden alineados.
     Los paneles no se enciman (se frenan o resbalan contra el de al lado), no se achican más de lo que
@@ -99,7 +101,7 @@ Se puede correr las veces que quieras.
 
 | Qué | Cómo |
 |---|---|
-| Abrir o cerrar la pantalla de inicio | `Super+G`, o el botón verde **Inicio** de la barra |
+| Abrir o cerrar la pantalla de inicio | `Super+G`, el botón verde **Inicio** de la barra, o **Esc** / **Volver** para cerrarla |
 | Pasar de página | deslizar el dedo, dos dedos en el touchpad, las flechas de arriba o las del teclado |
 | Mover un panel | **Editar** y arrastrarlo |
 | Agrandar o achicar un panel | **Editar** y tirar de la esquina amarilla de abajo a la derecha |

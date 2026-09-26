@@ -34,7 +34,7 @@ DEMO = os.environ.get("G5_DEMO") == "1"
 TOKEN = secrets.token_hex(16)
 
 # Lo que pueden lanzar los botones de la barra de abajo.
-# "volver": primero vuelve al escritorio donde estabas, así la app abre ahí.
+# "volver": primero esconde la pantalla de inicio, así la app abre en tu escritorio y no queda tapada.
 LANZADORES = {
     "terminal":  {"cmd": "foot", "volver": True},
     "navegador": {"cmd": "chromium", "volver": True},
@@ -710,7 +710,7 @@ def bot_accion(que, valor=None):
         return True
     if que == "terminal":
         cmd = shlex.join(["foot", "-T", BOT.get("nombre", "Bot"), os.path.join(CARPETA, "bot-ssh.sh")])
-        subprocess.run(["swaymsg", "workspace", "back_and_forth"], capture_output=True)
+        esconder_inicio()
         subprocess.Popen(["swaymsg", "exec", "--", cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     if que == "ip" and isinstance(valor, str) and HOST.fullmatch(valor.strip()):
@@ -801,7 +801,7 @@ def lanzar_app(ident):
     app = apps().get(ident)
     if not app:
         return False
-    subprocess.run(["swaymsg", "workspace", "back_and_forth"], capture_output=True)
+    esconder_inicio()
     if app["terminal"]:
         # Las apps de consola (htop, vim...) se abren dentro de foot
         comando = re.sub(r"\s%[fFuUdDnNickvm]", "", app["exec"])
@@ -917,7 +917,7 @@ def web_abrir(ident, n):
                 argv.append(url)
             else:
                 argv[i] = "--app=" + url
-    subprocess.run(["swaymsg", "workspace", "back_and_forth"], capture_output=True)
+    esconder_inicio()
     subprocess.Popen(["swaymsg", "exec", "--", shlex.join(argv)],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return True
@@ -1049,10 +1049,16 @@ def estado_guardar(nuevo):
 
 # ---------- Lanzar programas ----------
 
+def esconder_inicio():
+    """La pantalla de inicio es una capa (el scratchpad de sway): esconderla deja ver tu escritorio,
+    y lo que se abra aparece ahí en vez de quedar tapado por la capa."""
+    subprocess.run(["swaymsg", '[app_id="^chrome-127\\.0\\.0\\.1"] move scratchpad'], capture_output=True)
+
+
 def lanzar(nombre):
     item = LANZADORES[nombre]
     if item["volver"]:
-        subprocess.run(["swaymsg", "workspace", "back_and_forth"], capture_output=True)
+        esconder_inicio()
     if item["cmd"]:
         subprocess.Popen(["swaymsg", "exec", "--", item["cmd"]],
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -1180,7 +1186,7 @@ class Manejador(BaseHTTPRequestHandler):
             correr(["pamixer", "--toggle-mute"])
             return self._responder(200, {"ok": True})
         if self.path == "/api/video" and re.fullmatch(r"[A-Za-z0-9_-]{11}", str(cuerpo.get("id", ""))):
-            subprocess.run(["swaymsg", "workspace", "back_and_forth"], capture_output=True)
+            esconder_inicio()
             url = "https://www.youtube.com/watch?v=" + cuerpo["id"]
             subprocess.Popen(["swaymsg", "exec", "--", "chromium --app=" + url],
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

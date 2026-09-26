@@ -1042,6 +1042,11 @@
   }
   // La ventana queda abierta cuando la escondés (Super+G). Si volvés después de un rato,
   // arranca de nuevo en la Run Page 1, con los menús cerrados, en vez de donde quedó.
+  // Esc sin nada abierto esconde la pantalla de inicio (va primero, antes de que otros Esc cierren sus menús)
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || editing || vista !== "run" || !$("huevo").hidden || !$("hoja").hidden) return;
+    api("/api/lanzar", { que: "cerrar" }).catch(() => {});
+  }, true);
   let afuera = 0;
   window.addEventListener("blur", () => { afuera = Date.now(); });
   window.addEventListener("focus", () => {
