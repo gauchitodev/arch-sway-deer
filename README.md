@@ -57,6 +57,17 @@ Pantalla de login (opcional) para compus con dos usuarios: cada uno de un lado d
     **Bluetooth** (prender/apagar, conectar tus aparatos, ver su batería y vincular nuevos), disco, reloj,
     **música** (lo que suena en YouTube / YouTube Music, con barra para adelantar, volumen y la portada de fondo),
     mapa, últimos videos de YouTube, notas y el estado de un bot que corre en otro equipo por SSH.
+  - **Cada panel es un botón**: tocarlo abre su menú con más datos y acciones. Procesador y memoria: los
+    programas que más usan. Wifi: redes cerca, conectar y desconectar. Disco: qué carpetas ocupan más y
+    vaciar la papelera. Ventanas: ir a una o cerrarla. Brillo y volumen: deslizador y por dónde sale el
+    sonido. Reloj: calendario y temporizador (avisa con una notificación). Encendida: suspender, reiniciar
+    y apagar. Lo que no se deshace pide dos toques.
+  - **Mapa que se mueve solo**: una vez por día averigua dónde estás por tu conexión a internet (la laptop
+    no tiene GPS). Si no se puede saber (con datos del celular pasa siempre), muestra un pueblito perdido o
+    curioso del mundo, uno distinto cada día, con un dato. También podés fijar un lugar.
+  - **Mini Operations Center y mini Files** (opcional, con tu propia app de la API de John Deere): cuántas
+    máquinas reportaron hoy, horas de motor, última posición, alertas de la semana y "cómo llegar"; y los
+    últimos archivos de la organización. Solo lectura.
   - **Paneles web** que armás vos: el logo de una app web y botones que abren secciones fijas de ese sitio,
     más (si querés) la lista de los últimos archivos descargados que coinciden con un nombre.
   - **Menú de apps** estilo G5 (las apps web muestran su propio logo): Favoritas, Todas las apps y Sistema (apagar y reiniciar piden dos toques).
@@ -108,6 +119,7 @@ Se puede correr las veces que quieras.
 | Agregar o quitar paneles | **Editar** → **+ Agregar panel**, o la ✕ roja de cada panel |
 | Buscar y vincular un parlante | tocar el panel de **Bluetooth** (se abre su menú, aunque el panel sea chico) |
 | Revisar el bot, entrar por SSH o cambiarle la IP | tocar el panel del **bot** |
+| Ver más de cualquier panel o hacer algo con él | tocarlo (fuera de sus botones) |
 | Adelantar un tema | arrastrar la barra del panel de música |
 | Menú de apps | botón verde **Menú** (se cierra con la X amarilla o Esc) |
 | Calculadora | tecla de calculadora (otra vez la cierra); Ctrl+C copia el resultado |
@@ -204,6 +216,23 @@ navegador y mismas opciones de su `Exec=`, cambiando solo el `--app=`. Se config
 - `enlaces`: hasta 8, solo `https://`. El primero sale resaltado.
 - `archivos` (opcional): los últimos 6 archivos de esas carpetas cuyo nombre coincide con `patron`.
   Tocar uno copia su ruta: en la ventana de subir archivos, `Ctrl+L` y pegar.
+
+## Mini Operations Center y mini Files (opcional)
+
+Usan la API oficial de John Deere con **tu propia app** de desarrollador (developer.deere.com). Nada de
+esto viene en el repo: las claves van en `local/deere.json` (`client_id`, `client_secret`) y el permiso en
+`local/deere-token.json` (el que deja un login OAuth con `offline_access`, con el campo `vence` en
+milisegundos). En `local/config.json`:
+
+```json
+{ "deere": { "org": "123456", "app_opc": "operations-center.desktop", "app_files": "deere-files.desktop" } }
+```
+
+- `org`: el número de tu organización. Si tu usuario ve varias, se cambia desde el menú del panel.
+- `app_opc` / `app_files` (opcionales): las apps web con las que se abren los botones, así usan tu sesión.
+- Solo lee (equipos, posición, horas, alertas y archivos). Lo que llega queda unos minutos en memoria y
+  no se guarda en disco. Los números de serie y PIN se descartan, y un nombre que parece un PIN se tapa.
+- Los paneles aparecen en **Editar → + Agregar panel** solo si esto está configurado.
 
 ## Capturas sin datos personales
 

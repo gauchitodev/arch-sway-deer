@@ -12,6 +12,7 @@ import os
 import re
 import secrets
 import shlex
+import shutil
 import socket
 import struct
 import subprocess
@@ -23,6 +24,9 @@ import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from deere import Deere
+from lugares import Mapa
 
 # Cada usuario usa su propio puerto (8765 el primero, 8766 el segundo...), así la pantalla
 # de inicio de una persona nunca se conecta al servidor de otra que quedó andando.
@@ -48,6 +52,8 @@ LANZADORES = {
     "brillo_mas":    {"cmd": "brightnessctl s 10%+", "volver": False},
     "brillo_menos":  {"cmd": "brightnessctl s 10%-", "volver": False},
     "recargar":      {"cmd": "swaymsg reload", "volver": False},
+    "monitor":       {"cmd": "foot -e htop", "volver": True},
+    "suspender":     {"cmd": "swaylock -f -c 000000 && systemctl suspend", "volver": False},
     "cerrar_sesion": {"cmd": "swaymsg exit", "volver": False},
     "reiniciar":     {"cmd": "systemctl reboot", "volver": False},
     "apagar":        {"cmd": "systemctl poweroff", "volver": False},
@@ -748,6 +754,7 @@ def datos():
         "volumen": volumen(),
         "sway": ventanas(),
         "amfbot": _bot_info(),
+        "temporizador": {"fin": _timer["fin"], "min": _timer["min"]} if _timer["fin"] else None,
         "bluetooth": bluetooth(),
         "encendida_min": round(float(leer("/proc/uptime", "0").split()[0]) / 60),
         "equipo": socket.gethostname(),
@@ -903,8 +910,12 @@ def web_abrir(ident, n):
     w = WEB.get(ident)
     if not w or not isinstance(n, int) or isinstance(n, bool) or not 0 <= n < len(w["enlaces"]):
         return False
-    url = w["enlaces"][n]["url"]
-    app = apps().get(w["app"]) if w["app"] else None
+    return abrir_url(w["enlaces"][n]["url"], w["app"])
+
+
+def abrir_url(url, app_id=None):
+    """Abre la dirección como app web, con el mismo perfil y opciones que el .desktop que se diga."""
+    app = apps().get(app_id) if app_id else None
     argv = ["chromium", "--app=" + url]
     if app and not app["terminal"]:
         try:
@@ -929,6 +940,345 @@ def web_copiar(ident, nombre):
         if n == nombre:
             subprocess.run(["wl-copy", "--", ruta], capture_output=True, timeout=3)
             return True
+    return False
+
+
+# ---------- Mini Operations Center y mini Files (API de Deere, solo lectura) ----------
+
+DEERE_CFG = CONFIG.get("deere") if isinstance(CONFIG.get("deere"), dict) else {}
+DEERE = Deere(os.path.join(os.path.dirname(CARPETA), "local"), DEERE_CFG, DEMO)
+OPC = "https://operationscenter.deere.com/"
+FILES = "https://files.deere.com/"
+
+
+def _app_cfg(clave):
+    v = DEERE_CFG.get(clave)
+    return v if isinstance(v, str) and re.fullmatch(r"[A-Za-z0-9._-]{1,80}\.desktop", v) else None
+
+
+def deere_accion(que, ident=None):
+    if que == "actualizar":
+        DEERE.ver_flota(forzar=True)
+        DEERE.ver_archivos(forzar=True)
+        return True
+    if que == "org" and isinstance(ident, str):
+        return DEERE.cambiar_org(ident)
+    if que == "opc":
+        return abrir_url(OPC, _app_cfg("app_opc"))
+    if que == "files":
+        return abrir_url(FILES + "#/prescriptions" if ident == "rx" else FILES, _app_cfg("app_files"))
+    if que == "llegar" and isinstance(ident, str):
+        m = DEERE.maquina(ident)
+        if not m or not m["lugar"]:
+            return False
+        # Las coordenadas salen de la lista del servidor, no de la página
+        destino = f'{m["lugar"]["lat"]:.6f},{m["lugar"]["lon"]:.6f}'
+        return abrir_url("https://www.google.com/maps/dir/?api=1&destination=" + destino, "maps.desktop")
+    return False
+
+
+MAPA = Mapa(lambda: estado_leer(), lambda c: estado_mezclar(c), DEMO)   # se definen más abajo
+
+
+def mapa_google():
+    """Abre en Google Maps lo que muestra el panel (el lugar lo sabe el servidor, no la página)."""
+    m = MAPA.ver()
+    q = f'{m["lat"]},{m["lon"]}' if m.get("lat") is not None else m.get("nombre", "")
+    return abrir_url("https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote(q, safe=","), "maps.desktop")
+
+
+# ---------- Lo que muestran los menús de cada panel ----------
+
+def procesos(orden):
+    """Los programas que más usan, sumando los procesos del mismo nombre (Chromium tiene muchos)."""
+    grupos = {}
+    for f in correr(["ps", "-eo", "comm,pcpu,rss", "--no-headers"]).splitlines():
+        partes = f.rsplit(None, 2)
+        if len(partes) != 3:
+            continue
+        nombre, cpu, rss = partes
+        if nombre.strip() == "ps":   # el propio ps que acabamos de correr
+            continue
+        try:
+            g = grupos.setdefault(nombre.strip()[:30], {"nombre": nombre.strip()[:30], "cpu": 0.0, "mb": 0, "n": 0})
+            g["cpu"] += float(cpu)
+            g["mb"] += int(rss) // 1024
+            g["n"] += 1
+        except ValueError:
+            continue
+    lista = sorted(grupos.values(), key=lambda g: -(g["cpu"] if orden == "cpu" else g["mb"]))[:7]
+    for g in lista:
+        g["cpu"] = round(g["cpu"] / (os.cpu_count() or 1), 1)   # % de toda la compu, no de un núcleo
+    return lista
+
+
+def sensores():
+    lista = []
+    nombres = {"k10temp": "Procesador", "amdgpu": "Placa de video", "nvme": "Disco (SSD)",
+               "acpitz": "Placa madre", "iwlwifi_1": "Wifi", "rtw88_8821ce": "Wifi"}
+    for n in sorted(glob.glob("/sys/class/hwmon/*/name")):
+        base, chip = os.path.dirname(n), leer(n, "")
+        for t in sorted(glob.glob(base + "/temp*_input")):
+            v = leer_int(t)
+            if v is None:
+                continue
+            etiqueta = leer(t.replace("_input", "_label"), "")
+            lista.append({"nombre": nombres.get(chip, chip)[:24] + (f" · {etiqueta[:16]}" if etiqueta else ""),
+                          "c": round(v / 1000)})
+    return lista[:12]
+
+
+# Wifi (iwd): redes cerca y conectarse a las que ya conocés
+_wifi = {"t": 0, "redes": [], "conocidas": [], "trabajo": None, "error": None}
+_wifi_candado = threading.Lock()
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _wifi_leer():
+    salida = ANSI.sub("", correr(["iwctl", "station", "wlan0", "get-networks", "rssi-dbms"], timeout=4))
+    redes = []
+    for linea in salida.splitlines():
+        m = re.match(r"^\s*(>)?\s+(.+?)\s{2,}(psk|open|8021x|wep|owe)\s+(-?\d+)\s*$", linea)
+        if m:
+            redes.append({"nombre": m.group(2)[:40], "seguridad": m.group(3),
+                          "dbm": round(int(m.group(4)) / 100), "conectada": bool(m.group(1))})
+    conocidas = []
+    for linea in ANSI.sub("", correr(["iwctl", "known-networks", "list"], timeout=4)).splitlines():
+        m = re.match(r"^\s{2}(.+?)\s{2,}(psk|open|8021x|wep|owe)\s", linea)
+        if m:
+            conocidas.append(m.group(1)[:40])
+    _wifi.update(t=time.time(), redes=redes[:12], conocidas=conocidas)
+
+
+def wifi_info():
+    if DEMO:
+        return {"redes": [{"nombre": "MiWifi", "seguridad": "psk", "dbm": -48, "conectada": True, "conocida": True},
+                          {"nombre": "Vecino", "seguridad": "psk", "dbm": -80, "conectada": False, "conocida": False}],
+                "trabajo": None, "error": None}
+    if time.time() - _wifi["t"] > 8:
+        _wifi_leer()
+    return {"redes": [dict(r, conocida=r["nombre"] in _wifi["conocidas"]) for r in _wifi["redes"]],
+            "trabajo": _wifi["trabajo"], "error": _wifi["error"]}
+
+
+def _wifi_hacer(que, red):
+    cmd = {"buscar": ["iwctl", "station", "wlan0", "scan"],
+           "conectar": ["iwctl", "station", "wlan0", "connect", red or ""],
+           "desconectar": ["iwctl", "station", "wlan0", "disconnect"]}[que]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if r.returncode != 0:
+            _wifi["error"] = que
+    except (OSError, subprocess.SubprocessError):
+        _wifi["error"] = que
+    if que == "buscar":
+        time.sleep(4)   # el escaneo sigue un rato después de que iwctl contesta
+    _wifi.update(t=0, trabajo=None)
+    _red_cache["t"] = 0
+
+
+def wifi_accion(que, red=None):
+    if DEMO or que not in ("buscar", "conectar", "desconectar", "otra"):
+        return False
+    if que == "otra":
+        # Redes nuevas piden contraseña: se hace en iwctl, con la ayuda a mano
+        esconder_inicio()
+        subprocess.Popen(["swaymsg", "exec", "--", "foot -T Wifi -e iwctl"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    if que == "conectar" and (not isinstance(red, str) or red not in _wifi["conocidas"]
+                              or red not in [r["nombre"] for r in _wifi["redes"]]):
+        return False
+    with _wifi_candado:
+        if _wifi["trabajo"]:
+            return False
+        _wifi.update(trabajo=que, error=None)
+    threading.Thread(target=_wifi_hacer, args=(que, red), daemon=True).start()
+    return True
+
+
+# Disco: qué carpetas ocupan más (du tarda, se calcula aparte y se guarda 10 min)
+_du = {"t": 0, "carpetas": [], "calculando": False}
+PAPELERA = os.path.expanduser("~/.local/share/Trash")
+
+
+def _du_calcular():
+    casa = os.path.expanduser("~")
+    lista = []
+    for linea in correr(["du", "-x", "-d1", "-B1M", casa], timeout=90).splitlines():
+        partes = linea.split("\t", 1)
+        if len(partes) == 2 and partes[0].isdigit() and partes[1] != casa:
+            lista.append({"nombre": "~/" + os.path.basename(partes[1])[:40], "mb": int(partes[0])})
+    lista.sort(key=lambda c: -c["mb"])
+    _du.update(t=time.time(), carpetas=lista[:8], calculando=False)
+
+
+def _tam_mb(carpeta):
+    total = 0
+    for raiz, _, archivos in os.walk(carpeta):
+        for a in archivos:
+            try:
+                total += os.lstat(os.path.join(raiz, a)).st_size
+            except OSError:
+                pass
+    return round(total / 1048576)
+
+
+def disco_info():
+    if not _du["calculando"] and time.time() - _du["t"] > 600:
+        _du["calculando"] = True
+        threading.Thread(target=_du_calcular, daemon=True).start()
+    return {"carpetas": _du["carpetas"], "calculando": _du["calculando"],
+            "papelera_mb": _tam_mb(os.path.join(PAPELERA, "files"))}
+
+
+def vaciar_papelera():
+    for sub in ("files", "info"):
+        carpeta = os.path.join(PAPELERA, sub)
+        try:
+            with os.scandir(carpeta) as it:
+                for f in it:
+                    if f.is_dir(follow_symlinks=False):
+                        shutil.rmtree(f.path, ignore_errors=True)
+                    else:
+                        try:
+                            os.unlink(f.path)
+                        except OSError:
+                            pass
+        except OSError:
+            continue
+    _du["t"] = 0
+    return True
+
+
+# Ventanas abiertas: ir a una o cerrarla
+def ventanas_lista():
+    if DEMO:
+        return [{"id": 1, "app": "chromium", "titulo": "Operations Center", "escritorio": "1"},
+                {"id": 2, "app": "foot", "titulo": "Terminal", "escritorio": "2"}]
+    try:
+        arbol = json.loads(correr(["swaymsg", "-t", "get_tree"]) or "{}")
+    except ValueError:
+        return []
+    lista = []
+
+    def recorrer(nodo, ws=None):
+        if nodo.get("type") == "workspace":
+            ws = nodo.get("name")
+        app = nodo.get("app_id") or (nodo.get("window_properties") or {}).get("class") or ""
+        if nodo.get("pid") and not app.startswith("chrome-127.0.0.1"):
+            lista.append({"id": nodo["id"], "app": app[:40], "titulo": (nodo.get("name") or "")[:90],
+                          "escritorio": "" if ws == "__i3_scratch" else str(ws or "")[:20]})
+        for h in nodo.get("nodes", []) + nodo.get("floating_nodes", []):
+            recorrer(h, ws)
+
+    recorrer(arbol)
+    return lista[:30]
+
+
+def ventana_accion(que, ident):
+    if DEMO or que not in ("ir", "cerrar") or not isinstance(ident, int) or isinstance(ident, bool):
+        return False
+    if ident not in [v["id"] for v in ventanas_lista()]:
+        return False
+    if que == "ir":
+        esconder_inicio()
+        correr(["swaymsg", f"[con_id={ident}] focus"])
+    else:
+        correr(["swaymsg", f"[con_id={ident}] kill"])
+    _sway_cache["t"] = 0
+    return True
+
+
+# Salidas de sonido (parlantes, auriculares Bluetooth...)
+def salidas():
+    try:
+        lista = json.loads(correr(["pactl", "-f", "json", "list", "sinks"], timeout=3) or "[]")
+    except ValueError:
+        lista = []
+    defecto = correr(["pactl", "get-default-sink"]).strip()
+    return [{"nombre": str(s.get("name", ""))[:120], "desc": str(s.get("description") or s.get("name", ""))[:60],
+             "activa": s.get("name") == defecto} for s in lista if isinstance(s, dict)][:8]
+
+
+def salida_elegir(nombre):
+    if DEMO or not isinstance(nombre, str) or nombre not in [s["nombre"] for s in salidas()]:
+        return False
+    correr(["pactl", "set-default-sink", nombre])
+    return True
+
+
+# Temporizador del reloj: lo lleva el servidor, así suena aunque la pantalla de inicio esté cerrada
+_timer = {"fin": None, "min": None, "evento": None}
+
+
+def _timer_esperar(evento, fin, minutos):
+    if evento.wait(max(0, fin - time.time())):
+        return   # lo cancelaron
+    _timer.update(fin=None, min=None, evento=None)
+    txt = f"Pasaron {minutos} minuto{'s' if minutos != 1 else ''}"
+    subprocess.run(["notify-send", "-u", "critical", "-a", "G5", "Temporizador", txt], capture_output=True, timeout=5)
+
+
+def temporizador(minutos):
+    if _timer["evento"]:
+        _timer["evento"].set()
+        _timer.update(fin=None, min=None, evento=None)
+    if minutos is None:
+        return True
+    if not isinstance(minutos, int) or isinstance(minutos, bool) or not 1 <= minutos <= 600:
+        return False
+    ev = threading.Event()
+    fin = time.time() + minutos * 60
+    _timer.update(fin=fin, min=minutos, evento=ev)
+    threading.Thread(target=_timer_esperar, args=(ev, fin, minutos), daemon=True).start()
+    return True
+
+
+def red_mes():
+    hoy = date.today()
+    dias = [(hoy - timedelta(days=i)).isoformat() for i in range(29, -1, -1)]
+    return [{"dia": d, "mb": round(_red_uso["dias"].get(d, 0) / 1048576)} for d in dias]
+
+
+def extra(k):
+    """Datos que solo hacen falta con el menú de un panel abierto (algunos cuestan más de calcular)."""
+    if k == "cpu":
+        return {"procesos": procesos("cpu")}
+    if k == "ram":
+        return {"procesos": procesos("mem")}
+    if k == "temp":
+        return {"sensores": sensores()}
+    if k == "wifi":
+        return {"wifi": wifi_info()}
+    if k == "net":
+        return {"mes": red_mes()}
+    if k == "disk":
+        return disco_info()
+    if k == "win":
+        return {"ventanas": ventanas_lista()}
+    if k in ("vol", "musica"):
+        return {"salidas": salidas()}
+    return {}
+
+
+def hoja_accion(k, cuerpo):
+    que = cuerpo.get("que")
+    if k == "wifi":
+        return wifi_accion(que, cuerpo.get("red"))
+    if k == "win":
+        return ventana_accion(que, cuerpo.get("id"))
+    if k == "disk" and que == "papelera":
+        return not DEMO and vaciar_papelera()
+    if k in ("vol", "musica") and que == "salida":
+        return salida_elegir(cuerpo.get("nombre"))
+    if k == "bright" and que == "poner":
+        v = cuerpo.get("pct")
+        if DEMO or not isinstance(v, int) or isinstance(v, bool) or not 1 <= v <= 100:
+            return False
+        correr(["brightnessctl", "-q", "s", f"{v}%"])
+        return True
+    if k == "reloj" and que == "timer":
+        return temporizador(cuerpo.get("min"))
     return False
 
 
@@ -992,12 +1342,26 @@ def huevo():
 
 # ---------- Estado guardado (paneles y modo día/noche) ----------
 
+_estado_candado = threading.RLock()
+
+
 def estado_leer():
     try:
         with open(ESTADO) as f:
             return json.load(f)
     except (OSError, ValueError):
         return {}
+
+
+def estado_mezclar(cambios):
+    """Para lo que guarda el propio servidor (el mapa): mezcla sin pasar por el filtro de la página."""
+    with _estado_candado:
+        e = estado_leer()
+        e.update(cambios)
+        tmp = ESTADO + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(e, f, indent=2)
+        os.replace(tmp, ESTADO)
 
 
 def paginas_limpias(paginas):
@@ -1039,12 +1403,13 @@ def estado_guardar(nuevo):
             permitido.pop("paginas")
         else:
             permitido["paginas"] = paginas
-    actual = estado_leer()
-    if "paginas" in permitido:
-        actual.pop("paneles", None)  # formato viejo, de una sola página
-    actual.update(permitido)
-    with open(ESTADO, "w") as f:
-        json.dump(actual, f, indent=2)
+    with _estado_candado:
+        actual = estado_leer()
+        if "paginas" in permitido:
+            actual.pop("paneles", None)  # formato viejo, de una sola página
+        actual.update(permitido)
+        with open(ESTADO, "w") as f:
+            json.dump(actual, f, indent=2)
 
 
 # ---------- Lanzar programas ----------
@@ -1139,6 +1504,16 @@ class Manejador(BaseHTTPRequestHandler):
             lista = [{"id": a["id"], "nombre": a["nombre"], "categorias": a["categorias"], "icono": bool(a["icono"])}
                      for a in apps().values()]
             return self._responder(200, sorted(lista, key=lambda a: a["nombre"].lower()))
+        if self.path.startswith("/api/extra?") and self._token_ok():
+            k = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("k", [""])[0]
+            return self._responder(200, extra(k))
+        if self.path == "/api/mapa" and self._token_ok():
+            return self._responder(200, MAPA.ver())
+        if self.path == "/api/deere" and self._token_ok():
+            if not DEERE.configurado():
+                return self._responder(200, {"configurado": False})
+            return self._responder(200, {"configurado": True, "orgs": DEERE.lista_orgs(),
+                                         "flota": DEERE.ver_flota(), "archivos": DEERE.ver_archivos()})
         if self.path == "/api/web" and self._token_ok():
             return self._responder(200, web_lista())
         if self.path.startswith("/api/web/archivos?") and self._token_ok():
@@ -1221,6 +1596,15 @@ class Manejador(BaseHTTPRequestHandler):
         if self.path == "/api/web/copiar":
             ok = web_copiar(cuerpo.get("id"), cuerpo.get("nombre"))
             return self._responder(200 if ok else 404, {"ok": ok})
+        if self.path == "/api/hoja":
+            ok = hoja_accion(cuerpo.get("k"), cuerpo)
+            return self._responder(200 if ok else 409, {"ok": ok})
+        if self.path == "/api/mapa":
+            ok = mapa_google() if cuerpo.get("que") == "gmaps" else MAPA.accion(cuerpo.get("que"), cuerpo.get("lugar"))
+            return self._responder(200 if ok else 400, {"ok": ok})
+        if self.path == "/api/deere":
+            ok = DEERE.configurado() and deere_accion(cuerpo.get("que"), cuerpo.get("id"))
+            return self._responder(200 if ok else 409, {"ok": ok})
         if self.path == "/api/lanzar" and cuerpo.get("que") in LANZADORES:
             lanzar(cuerpo["que"])
             return self._responder(200, {"ok": True})

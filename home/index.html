@@ -477,6 +477,65 @@
   .mod[data-k="bt"], .mod[data-k="amfbot"] { cursor: pointer; }
   .editing .mod[data-k="bt"], .editing .mod[data-k="amfbot"] { cursor: grab; }
   .mod.choca { outline-color: var(--crit) !important; }
+  /* Todos los paneles con menú se abren al tocarlos */
+  .mod.con-hoja { cursor: pointer; }
+  .editing .mod.con-hoja { cursor: grab; }
+  .hoja.ancha .huevo-caja { width: min(1000px, 100%); }
+  .hoja-grande { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .hoja-grande b { font-size: 52px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .hoja-grande b small { font-size: 22px; color: var(--muted); margin-left: 3px; }
+  .hoja-grande span { color: var(--muted); }
+  .hoja-cuerpo .spark { height: 90px; }
+  .hoja-cuerpo h4 { margin: 4px 0 0; font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .hoja-lista { display: grid; gap: 6px; }
+  .hoja-lista .fila { align-items: center; font-size: 16px; }
+  .hoja-lista .fila > span { color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hoja-lista .fila > span em { font-style: normal; color: var(--muted); font-size: 13px; margin-left: 6px; }
+  .hoja-lista .fila .acc { display: flex; gap: 6px; flex: none; align-items: center; }
+  .hoja-lista .fila .chip { min-height: 40px; }
+  .hoja-lista .fila .chip.on { background: var(--green); color: #fff; border-color: var(--green-deep); }
+  .chip.armado, .hoja-botones .chip.armado { background: var(--crit); color: #fff; border-color: var(--crit); }
+  .chip.peligro { color: var(--crit); }
+  .hoja-rango { display: flex; align-items: center; gap: 12px; }
+  .hoja-rango input { flex: 1; height: 44px; accent-color: var(--green-bright); touch-action: none; }
+  .hoja-rango b { min-width: 4ch; text-align: right; font-size: 20px; }
+  .hoja-barras { display: flex; align-items: flex-end; gap: 3px; height: 110px; }
+  .hoja-barras div { flex: 1; display: grid; justify-items: center; gap: 3px; font-size: 10px; color: var(--muted); min-width: 0; }
+  .hoja-barras i { width: 100%; background: var(--green); border-radius: 2px 2px 0 0; min-height: 2px; }
+  .hoja-barras div.hoy i { background: var(--green-bright); }
+  #hojaMapa iframe { width: 100%; height: 340px; border: 0; display: block; border-radius: 4px; }
+  #hojaMapa[hidden] { display: none; }
+  .hoja-cuerpo { max-height: calc(100vh - 170px); overflow-y: auto; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-variant-numeric: tabular-nums; }
+  .cal span { padding: 8px 0; border-radius: 4px; }
+  .cal .dn { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+  .cal .hoy { background: var(--green); color: #fff; font-weight: 800; }
+  .cal .finde { color: var(--muted); }
+  .etq { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--track); color: var(--muted); }
+  .etq.ok { background: var(--pill); color: var(--pill-ink); }
+  .etq.warn { background: #f6e3a6; color: #5a4300; }
+  .etq.crit { background: #f3c6c3; color: #6e1511; }
+  .mapa-dato { font-size: 15px; line-height: 1.45; }
+  .yt-hoja { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .mus-hoja { display: flex; gap: 18px; align-items: center; }
+  .mus-hoja img, .mus-hoja .mus-art { width: 140px; height: 140px; border-radius: 6px; object-fit: cover; flex: none; }
+  .mus-hoja b { font-size: 22px; display: block; }
+  /* Mini Operations Center y mini Files */
+  .jd-cab { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+  .jd-cab .chip.prin { background: var(--green); color: #fff; border-color: var(--green-deep); }
+  .jd-lista { display: grid; gap: 6px; }
+  .jd-fila { display: flex; align-items: center; gap: 10px; font-size: 14px; border-top: 1px solid var(--tile-edge); padding-top: 6px; min-width: 0; }
+  .jd-fila > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jd-fila > em { font-style: normal; color: var(--muted); font-size: 13px; flex: none; font-variant-numeric: tabular-nums; }
+  .luz-chica { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--bar-off); }
+  .luz-chica.ok { background: var(--green-bright); }
+  .luz-chica.duda { background: var(--warn); }
+  .luz-chica.mal { background: var(--crit); }
+  .mod.m .jd-lista > :nth-child(n+4), .mod.g .jd-lista > :nth-child(n+9) { display: none; }
+  .hoja-lista button.jd-fila { background: none; border: 0; border-top: 1px solid var(--tile-edge); color: var(--ink); font: 600 16px var(--font); text-align: left; cursor: pointer; padding: 10px 2px 4px; width: 100%; }
+  .hoja-lista button.jd-fila:active { background: var(--track); }
+  .hoja-orgs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hoja-orgs .chip[aria-pressed="true"] { background: var(--yellow); color: var(--yellow-ink); border-color: #b39b00; }
   .hoja-ip input.mal { outline: 2px solid var(--crit); }
 
   .offline {
@@ -554,7 +613,7 @@
   <div class="huevo hoja" id="hoja" hidden>
     <div class="huevo-caja" role="dialog" aria-labelledby="hojaTit">
       <div class="huevo-cab"><h2 id="hojaTit">—</h2></div>
-      <div class="hoja-cuerpo"><div id="hojaVivo"></div><div id="hojaFijo"></div></div>
+      <div class="hoja-cuerpo"><div id="hojaMapa" hidden><iframe title="Mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div><div id="hojaVivo"></div><div id="hojaFijo"></div></div>
       <button type="button" class="xbtn" id="hojaCerrar" aria-label="Cerrar">✕</button>
     </div>
   </div>
@@ -655,14 +714,24 @@
                  <input type="range" id="musVol" min="0" max="100" step="1" value="50" aria-label="Volumen"><b id="musVolTxt">—</b></div>
                <button type="button" data-abrir="app:ytmusic.desktop" class="mus-abrir">YT Music</button></div>` },
     mapa:   { name: "Mapa", html: `<div class="mapa-wrap"><iframe id="mapaFrame" title="Mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
-             <div class="mapa-pie"><span class="sub" id="mapaLugar">—</span><button type="button" class="chip" data-abrir="app:maps.desktop">Abrir Google Maps</button></div>
-             <div class="cfg"><input id="mapaInput" type="text" placeholder="Lugar, por ejemplo: Florida, Uruguay"><button type="button" class="chip" id="mapaGuardar">Guardar</button></div>` },
+             <div class="mapa-pie"><span class="sub" id="mapaLugar">—</span><span class="etq" id="mapaFuente"></span></div>` },
     youtube:{ name: "YouTube", title: "YouTube · últimos videos", html: `<div class="yt" id="ytLista"><div class="sub">Cargando videos…</div></div>
              <div class="cfg"><input id="ytInput" type="text" placeholder="@canal (ej. @JohnDeere)"><button type="button" class="chip" id="ytAgregar">Agregar canal</button>
                <div class="yt-canales" id="ytCanales"></div></div>` },
     notas:  { name: "Notas", html: `<textarea class="notas" id="notas" spellcheck="false" placeholder="Escribí acá. Se guarda solo."></textarea><div class="sub" id="notasSub">Guardado</div>` },
     vol:    { name: "Volumen", html: `<div class="big"><span id="vol">—</span><small>%</small></div><div class="gauge"><i id="volG"></i></div><div class="sub" id="volSub"></div>` }
   };
+  // Mini Operations Center y mini Files: solo aparecen si local/config.json tiene "deere"
+  function registrarDeere(d) {
+    if (!d || !d.configurado) return;
+    MODS.opc = { name: "Operations Center", title: "Operations Center · flota", html: `<div class="jd-cab"><div class="big"><span id="opcN">—</span><small id="opcDe"></small></div>
+        <button type="button" class="chip prin" data-jd="opc">Abrir OPC</button></div>
+      <div class="sub" id="opcSub">Cargando…</div><div class="det jd-lista" id="opcLista"></div>` };
+    MODS.jdfiles = { name: "Deere Files", title: "Deere Files · archivos", html: `<div class="jd-cab"><div class="big"><span id="jdfN">—</span><small>archivos</small></div>
+        <button type="button" class="chip prin" data-jd="files">Abrir Files</button></div>
+      <div class="sub" id="jdfSub">Cargando…</div><div class="det jd-lista" id="jdfLista"></div>` };
+    deere = d;
+  }
   // Paneles web: salen de local/config.json ("web"), por ejemplo Operations Center y Files
   function registrarWeb(lista) {
     lista.forEach(w => {
@@ -720,7 +789,7 @@
     }, 600);
   });
 
-  let mapaLugar = "Florida, Uruguay";
+  let mapaInfo = null, deere = null;
   let ytDatos = null, ytHora = 0;
   function pintarYT() {
     const d = ytDatos; if (!d || !$("ytLista")) return;
@@ -741,7 +810,8 @@
     const d = new Date();
     set("relojHora", String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"));
     set("relojSeg", String(d.getSeconds()).padStart(2, "0"));
-    set("relojFecha", `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`);
+    const t = ultimo && ultimo.temporizador;
+    set("relojFecha", `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}` + (t ? ` · ⏱ ${quedan(t.fin)}` : ""));
   }
   setInterval(tickReloj, 1000);
 
@@ -763,10 +833,7 @@
       return;
     }
     if (b.dataset.abrir && !editing) { api("/api/lanzar", { que: b.dataset.abrir }).catch(() => {}); return; }
-    if (b.id === "mapaGuardar") {
-      const v = $("mapaInput").value.trim(); if (!v) return;
-      mapaLugar = v; api("/api/estado", { mapa: v }).catch(() => {}); renderModules(); return;
-    }
+    if (b.dataset.jd && !editing) { api("/api/deere", { que: b.dataset.jd }).catch(() => {}); return; }
     if (b.id === "ytAgregar") {
       const h = $("ytInput").value.trim(); if (!h) return;
       b.textContent = "Buscando…";
@@ -906,7 +973,7 @@
     empacar(lista);
     $("modules").innerHTML = `<div class="lienzo" id="lienzo">${lista.length ? lista.map((p, i) => {
       const m = MODS[p.k];
-      return `<div class="mod ${p.t}" data-i="${i}" data-k="${p.k}">
+      return `<div class="mod ${p.t}${HOJAS[p.k] ? " con-hoja" : ""}" data-i="${i}" data-k="${p.k}">
         <h3>${p.t === "s" ? m.name : (m.title || m.name)}</h3>
         <div class="edit-ctl"><button type="button" class="rm" data-rm aria-label="Quitar ${m.name}">✕</button></div>
         <div class="body">${m.html}</div>
@@ -930,11 +997,8 @@
     document.title = titulo;   // la barra de arriba muestra este nombre
     const ta = $("notas");
     if (ta) ta.value = notasTexto;
-    if ($("mapaFrame")) {
-      $("mapaFrame").src = "https://maps.google.com/maps?q=" + encodeURIComponent(mapaLugar) + "&t=k&z=12&output=embed";
-      set("mapaLugar", mapaLugar);
-      $("mapaInput").value = mapaLugar;
-    }
+    pintarMapa();
+    pintarDeere();
     if ($("ytLista")) cargarYT();
     cargarArchivos();
     tickReloj();
@@ -1503,43 +1567,311 @@
     if (bot.estado === "detenido") sub = `Revisá ${bot.dispositivo}`;
     if (bot.estado === "sin_conexion") sub = `No encuentro ${bot.dispositivo} en la red`;
     if (bot.estado === "sin_conexion" && bot.error === "buscar") sub = `No encontré ${bot.dispositivo} en la red: ¿está prendido, con Termux y sshd?`;
-    if (bot.estado === "andando" && bot.encontrado === bot.host) sub += ` · IP nueva: ${bot.host}`;
+    if (bot.estado === "andando" && bot.host && bot.encontrado === bot.host) sub += ` · IP nueva: ${bot.host}`;
     if (bot.error === "arrancar") sub = "No se pudo arrancar el bot";
     if (bot.trabajo === "buscar") return `Buscando ${bot.dispositivo} en la red…`;
     if (bot.revisado) sub += ` · ${bot.revisado}`;
     return sub;
   }
 
-  // ---------- Menú al tocar el panel del bot o del Bluetooth ----------
-  // #hojaVivo se repinta con cada dato nuevo; #hojaFijo (el campo de la IP) se arma una vez, así no te borra lo que escribís.
-  let hoja = null, deslizado = 0;
-  function abrirHoja(k) {
-    hoja = k;
-    $("hojaVivo").dataset.html = "";
-    $("hojaFijo").innerHTML = "";
-    if (k === "amfbot") {
-      const bot = (ultimo || {}).amfbot || {};
-      set("hojaTit", bot.nombre || "Bot");
-      if (bot.host) $("hojaFijo").innerHTML = `<div class="hoja-ip">
+  // ---------- Mapa: dónde estás (aproximado) o un lugar del mundo por día ----------
+  const FUENTE_MAPA = { ip: "Cerca tuyo", lugar: "Lugar del día", fijo: "Lugar fijo" };
+  function mapaUrl(m) {
+    if (!m || !m.nombre) return "";
+    const q = m.lat != null ? `${m.lat},${m.lon}` : m.nombre;
+    const z = m.fuente === "lugar" ? 14 : m.fuente === "ip" ? 11 : 12;
+    return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=k&z=${z}&output=embed`;
+  }
+  function pintarMapa() {
+    const m = mapaInfo, f = $("mapaFrame"); if (!f || !m) return;
+    const url = mapaUrl(m);
+    if (f.dataset.url !== url) { f.dataset.url = url; f.src = url; }
+    set("mapaLugar", m.pais ? `${m.nombre} · ${m.pais}` : m.nombre);
+    set("mapaFuente", FUENTE_MAPA[m.fuente] || "");
+  }
+  let mapaEsperando = false;
+  function cargarMapa() {
+    return api("/api/mapa").then(m => {
+      mapaInfo = m; pintarMapa();
+      if (hoja === "mapa") pintarHoja(ultimo);
+      // Mientras averigua dónde estás, vuelve a preguntar en unos segundos
+      if (m.buscando && !mapaEsperando) { mapaEsperando = true; setTimeout(() => { mapaEsperando = false; cargarMapa(); }, 3000); }
+    }).catch(() => {});
+  }
+
+  // ---------- Mini Operations Center y mini Files ----------
+  function hace(ms) {
+    if (!ms) return "—";
+    const min = Math.round((Date.now() - ms) / 60000);
+    if (min < 1) return "recién";
+    if (min < 60) return `hace ${min} min`;
+    if (min < 1440) return `hace ${Math.round(min / 60)} h`;
+    const d = Math.round(min / 1440);
+    return `hace ${d} día${d === 1 ? "" : "s"}`;
+  }
+  const DIA_MS = 86400000;
+  const maqLuz = (m) => m.alertas.some(a => a.color === "RED") ? "mal"
+    : !m.lugar ? "" : Date.now() - m.lugar.cuando < DIA_MS ? (m.alertas.length ? "duda" : "ok")
+    : Date.now() - m.lugar.cuando < 7 * DIA_MS ? "duda" : "";
+  const horasTxt = (m) => m.horas ? `${Math.round(m.horas.horas).toLocaleString("es-UY")} h` : "";
+  const DEERE_ERR = {
+    permiso: "El permiso de Deere venció: en una terminal corré  node ~/deere-api/deere.mjs login",
+    red: "No pude hablar con Deere (¿hay internet?)",
+    prohibido: "Deere no deja ver los archivos de esta organización"
+  };
+  const orgNombre = () => deere && deere.flota ? (((deere.orgs || []).find(o => o.id === deere.flota.org) || {}).nombre || "") : "";
+  const setHtml = (id, html) => { const el = $(id); if (el && el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; } };
+  let deereEsperando = false;
+  function cargarDeere() {
+    if (!deere || !deere.configurado) return;
+    if (!$("opcN") && !$("jdfN") && hoja !== "opc" && hoja !== "jdfiles") return;
+    api("/api/deere").then(d => {
+      if (!d.configurado) return;
+      deere = d; pintarDeere();
+      if (hoja === "opc" || hoja === "jdfiles") pintarHoja(ultimo);
+      // Deere contesta en segundo plano: mientras carga, pregunta seguido
+      if ((d.flota.cargando || d.archivos.cargando) && !deereEsperando) {
+        deereEsperando = true; setTimeout(() => { deereEsperando = false; cargarDeere(); }, 4000);
+      }
+    }).catch(() => {});
+  }
+  function pintarDeere() {
+    const d = deere; if (!d || !d.flota) return;
+    const f = d.flota, maq = f.maquinas || [];
+    if ($("opcN")) {
+      const hoy = maq.filter(m => m.lugar && Date.now() - m.lugar.cuando < DIA_MS);
+      const conAlerta = maq.filter(m => m.alertas.length);
+      set("opcN", maq.length ? hoy.length : "—");
+      set("opcDe", maq.length ? `de ${maq.filter(m => m.telemetria).length} con señal hoy` : "");
+      set("opcSub", f.error ? DEERE_ERR[f.error] : !maq.length ? (f.cargando || !f.t ? "Pidiendo la flota a Deere…" : "Sin máquinas")
+        : `${conAlerta.length ? `${conAlerta.length} con alertas` : "Sin alertas"} · ${orgNombre()}`);
+      setHtml("opcLista", maq.filter(m => m.telemetria).map(m => `<div class="jd-fila"><i class="luz-chica ${maqLuz(m)}"></i>
+        <span>${esc(m.nombre)}</span><em>${horasTxt(m)}${m.lugar ? " · " + hace(m.lugar.cuando) : ""}</em></div>`).join(""));
+    }
+    const a = d.archivos || {}, l = a.lista || [];
+    if ($("jdfN")) {
+      set("jdfN", a.error || !l.length && (a.cargando || !a.t) ? "—" : l.length);
+      set("jdfSub", a.error ? DEERE_ERR[a.error] : l.length ? `Último ${hace(l[0].fecha)} · ${orgNombre()}`
+        : a.cargando || !a.t ? "Pidiendo archivos a Deere…" : "No hay archivos");
+      setHtml("jdfLista", l.slice(0, 8).map(x => `<div class="jd-fila"><span>${esc(x.nombre)}</span>
+        <em>${x.pendiente ? "enviando · " : ""}${x.fecha ? fechaCorta(x.fecha / 1000) : ""}</em></div>`).join(""));
+    }
+  }
+
+  // ---------- Menú de cada panel (tocás el panel y se abre) ----------
+  // #hojaVivo se repinta con cada dato nuevo; #hojaFijo (campos para escribir, deslizadores) se arma una vez,
+  // así no te borra lo que escribís ni te suelta el deslizador; #hojaMapa solo recarga si cambia el lugar.
+  let hoja = null, deslizado = 0, hojaSel = null, hojaExtra = {}, hojaExtraTimer = null;
+  let hojaArmado = null, hojaArmadoT = null;
+  const fil = (a, b) => `<div class="fila"><span>${a}</span><b>${b}</b></div>`;
+  const boton = (attrs, txt, cls = "") => `<button type="button" class="chip ${cls}" ${attrs}>${txt}</button>`;
+  // Lo que no se deshace (apagar, cerrar una ventana, vaciar la papelera) pide dos toques
+  const peligro = (clave, attrs, txt) => hojaArmado === clave
+    ? `<button type="button" class="chip armado" ${attrs}>¿Seguro? Tocá de nuevo</button>`
+    : `<button type="button" class="chip peligro" ${attrs} data-armar="${esc(clave)}">${txt}</button>`;
+  const mbTxt = (mb) => mb >= 1024 ? (mb / 1024).toFixed(1).replace(".", ",") + " GB" : mb + " MB";
+  const gauge = (pct, cls = "") => `<div class="gauge"><i class="${cls}" style="width:${Math.max(0, Math.min(100, pct))}%"></i></div>`;
+  const cargando = '<div class="sub">Cargando…</div>';
+  const procLista = (l, que) => !l ? cargando : `<div class="hoja-lista">${l.map(p => `<div class="fila">
+      <span>${esc(p.nombre)}${p.n > 1 ? `<em>${p.n} procesos</em>` : ""}</span><b>${que === "cpu" ? p.cpu.toFixed(1) + " %" : mbTxt(p.mb)}</b></div>`).join("")}</div>`;
+  const estBat = (b) => ({ Discharging: "Descargando", Charging: "Cargando", Full: "Cargada", "Not charging": "Enchufada" })[b.estado] || b.estado;
+  const monitor = boton('data-lz="monitor"', "Monitor del sistema");
+  function calendario() {
+    const hoy = new Date(), y = hoy.getFullYear(), mo = hoy.getMonth();
+    const primero = (new Date(y, mo, 1).getDay() + 6) % 7;   // la semana empieza el lunes
+    let h = ["lu", "ma", "mi", "ju", "vi", "sá", "do"].map(x => `<span class="dn">${x}</span>`).join("") + "<span></span>".repeat(primero);
+    for (let i = 1; i <= new Date(y, mo + 1, 0).getDate(); i++) {
+      h += `<span class="${i === hoy.getDate() ? "hoy" : (primero + i - 1) % 7 >= 5 ? "finde" : ""}">${i}</span>`;
+    }
+    return `<h4>${MESES[mo]} ${y}</h4><div class="cal">${h}</div>`;
+  }
+  const quedan = (fin) => mmss(Math.max(0, fin - Date.now() / 1000));
+  const WIFI_HACIENDO = { buscar: "Buscando redes…", conectar: "Conectando…", desconectar: "Desconectando…" };
+  const WIFI_FALLO = { buscar: "No se pudo buscar", conectar: "No se pudo conectar", desconectar: "No se pudo desconectar" };
+  const volFijo = () => `<div class="hoja-rango"><button type="button" class="chip" data-mute="1" aria-label="Silenciar">${svgIco("vol")}</button>
+      <input type="range" id="hVol" min="0" max="100" step="1" aria-label="Volumen"><b id="hVolTxt">—</b></div>`;
+  function volDespues(d) {
+    const r = $("hVol"); if (!r || !d.volumen) return;
+    if (!hVolTocando && d.volumen.pct != null) { r.value = d.volumen.pct; set("hVolTxt", d.volumen.pct + "%"); }
+    const m = $("hojaFijo").querySelector("[data-mute]");
+    m.classList.toggle("armado", !!d.volumen.mudo); m.innerHTML = svgIco(d.volumen.mudo ? "mudo" : "vol");
+  }
+  const salidasLista = (x) => !x.salidas ? "" : x.salidas.length < 2 ? "" : `<h4>Por dónde sale el sonido</h4><div class="hoja-lista">${x.salidas.map(s => `<div class="fila">
+      <span>${esc(s.desc)}</span><span class="acc">${s.activa ? boton("disabled", "En uso", "on") : boton(`data-h="salida" data-nombre="${esc(s.nombre)}"`, "Usar")}</span></div>`).join("")}</div>`;
+
+  const HOJAS = {
+    cpu: { tit: "Procesador", extra: true, vivo: (d, x) => {
+      const cd = d.cpu_det || {};
+      return `<div class="hoja-grande"><b>${d.cpu}<small>%</small></b><span>${esc(d.cpu_modelo)} · ${d.hilos} hilos</span></div>
+        ${linea("hCpuLine", "hCpuFill")}
+        <div class="det">${fil("Frecuencia", cd.ghz ? `${cd.ghz.toFixed(1)} GHz de ${cd.ghz_max} GHz` : "—")}
+          ${fil("Carga 1 / 5 / 15 min", cd.carga ? cd.carga.map(v => v.toFixed(2)).join(" / ") : "—")}</div>
+        <h4>Los que más usan ahora</h4>${procLista(x.procesos, "cpu")}
+        <div class="hoja-botones">${monitor}</div>`;
+    }, despues: () => dibujarLinea("hCpuLine", "hCpuFill", cpuHist, 0, 100) },
+
+    ram: { tit: "Memoria", extra: true, vivo: (d, x) => `<div class="hoja-grande"><b>${d.ram}<small>GB</small></b><span>de ${d.ram_total} GB</span></div>
+        ${gauge(100 * d.ram / d.ram_total, d.ram / d.ram_total > .9 ? "crit" : d.ram / d.ram_total > .75 ? "warn" : "")}
+        <div class="det">${fil("Memoria de intercambio", d.swap ? `${d.swap} GB` : "Sin usar")}</div>
+        <h4>Los que más ocupan</h4>${procLista(x.procesos, "mem")}
+        <div class="hoja-botones">${monitor}</div>` },
+
+    bat: { tit: "Batería", vivo: (d) => {
+      const b = d.bateria;
+      if (!b) return '<div class="sub">Esta compu no tiene batería.</div>';
+      return `<div class="hoja-grande"><b>${b.pct}<small>%</small></b><span>${estBat(b)}${b.minutos ? " · " + hm(b.minutos) + (b.estado === "Charging" ? " para llenar" : " de uso") : ""}</span></div>
+        ${gauge(b.pct, b.estado === "Discharging" ? (b.pct <= 12 ? "crit" : b.pct <= 25 ? "warn" : "") : "")}
+        <div class="det">${fil("Salud", b.salud != null ? `${b.salud}% ${b.salud >= 80 ? "(buena)" : "(gastada)"}` : "—")}
+          ${fil("Temperatura", b.temp != null ? `${b.temp} °C` : "—")}${fil("Consumo ahora", b.watts != null ? `${b.watts} W` : "—")}
+          ${b.ciclos ? fil("Ciclos de carga", b.ciclos) : ""}${d.brillo != null ? fil("Brillo de pantalla", d.brillo + "%") : ""}</div>
+        <div class="hoja-aviso">Bajar el brillo es lo que más estira la batería.</div>
+        <div class="hoja-botones">${boton('data-lz="brillo_menos"', "Menos brillo")}${boton('data-lz="brillo_mas"', "Más brillo")}${boton('data-lz="suspender"', "Suspender")}</div>`;
+    } },
+
+    temp: { tit: "Temperatura", extra: true, vivo: (d, x) => `<div class="hoja-grande"><b>${d.temp ?? "—"}<small>°C</small></b><span>Procesador · últimos 2 minutos</span></div>
+        ${linea("hTempLine", "hTempFill")}<div class="sub">De 30 a 90 °C. Más de 80 °C es zona de alerta.</div>
+        <h4>Todos los sensores</h4>${!x.sensores ? cargando : `<div class="hoja-lista">${x.sensores.map(s => fil(esc(s.nombre),
+          `<span class="etq ${s.c >= 85 ? "crit" : s.c >= 70 ? "warn" : "ok"}">${s.c} °C</span>`)).join("")}</div>`}
+        <div class="hoja-botones">${monitor}</div>`,
+      despues: () => dibujarLinea("hTempLine", "hTempFill", temps, 30, 90) },
+
+    wifi: { tit: "Wifi", extra: true, vivo: (d, x) => {
+      const r = d.red, u = d.uso_red || {}, w = x.wifi, tr = w && w.trabajo;
+      return `<div class="hoja-grande"><b style="font-size:34px">${esc(r.ssid || "Sin conexión")}</b><span>${r.dbm != null ? r.dbm + " dBm" : ""}</span></div>
+        <div class="det">${fil("Ahora", `↓ ${(u.bajada || 0).toFixed(1)} Mbps · ↑ ${(u.subida || 0).toFixed(1)} Mbps`)}</div>
+        ${w && (tr || w.error) ? `<div class="sub">${tr ? WIFI_HACIENDO[tr] : WIFI_FALLO[w.error] || "No se pudo"}</div>` : ""}
+        <h4>Redes cerca</h4>${!w ? cargando : !w.redes.length ? '<div class="sub">No veo redes. Tocá Buscar.</div>' : `<div class="hoja-lista">${w.redes.map(n => `<div class="fila">
+          <span>${esc(n.nombre)}<em>${n.dbm} dBm${n.seguridad === "open" ? " · abierta" : ""}</em></span><span class="acc">${
+          n.conectada ? boton(`data-h="desconectar"${tr ? " disabled" : ""}`, "Desconectar", "on")
+          : n.conocida ? boton(`data-h="conectar" data-red="${esc(n.nombre)}"${tr ? " disabled" : ""}`, "Conectar")
+          : boton('data-h="otra"', "Nueva…")}</span></div>`).join("")}</div>`}
+        <div class="hoja-botones">${boton(`data-h="buscar"${tr ? " disabled" : ""}`, tr === "buscar" ? "Buscando…" : "Buscar redes", "prin")}${boton('data-h="otra"', "Conectar a una red nueva")}</div>
+        <div class="hoja-aviso">Las redes nuevas piden contraseña: se abre <code>iwctl</code>. Ahí escribí <code>station wlan0 connect "Nombre"</code> y la contraseña.</div>`;
+    } },
+
+    net: { tit: "Datos usados", extra: true, cada: 15000, vivo: (d, x) => {
+      const u = d.uso_red || {}, mes = x.mes || [];
+      const max = Math.max(1, ...mes.map(m => m.mb)), suma = (n) => mes.slice(-n).reduce((a, m) => a + m.mb, 0);
+      return `<div class="hoja-grande"><b>${(u.hoy_mb || 0).toLocaleString("es-UY")}<small>MB hoy</small></b><span>↓ ${(u.bajada || 0).toFixed(1)} · ↑ ${(u.subida || 0).toFixed(1)} Mbps</span></div>
+        <h4>Últimos 30 días</h4>${!mes.length ? cargando : `<div class="hoja-barras">${mes.map((m, i) => `<div class="${i === mes.length - 1 ? "hoy" : ""}" title="${m.dia}: ${m.mb} MB">
+          <i style="height:${Math.round(90 * m.mb / max) + 2}px"></i>${i === mes.length - 1 ? "hoy" : (29 - i) % 7 === 0 ? Number(m.dia.slice(8)) : ""}</div>`).join("")}</div>
+        <div class="det">${fil("Últimos 7 días", mbTxt(suma(7)))}${fil("Últimos 30 días", mbTxt(suma(30)))}
+          ${fil("Promedio por día", mbTxt(Math.round(suma(30) / 30)))}${fil("Desde que prendiste", mbTxt(d.red.mb))}</div>`}`;
+    } },
+
+    disk: { tit: "Disco", extra: true, cada: 10000, vivo: (d, x) => `<div class="hoja-grande"><b>${d.disco.pct}<small>%</small></b><span>${d.disco.libre} GB libres de ${d.disco.total} GB</span></div>
+        ${gauge(d.disco.pct, d.disco.pct >= 92 ? "crit" : d.disco.pct >= 80 ? "warn" : "")}
+        <h4>Lo que más ocupa en tu carpeta</h4>${!x.carpetas || (!x.carpetas.length && x.calculando) ? '<div class="sub">Midiendo carpetas… tarda un poco.</div>'
+          : `<div class="hoja-lista">${x.carpetas.map(c => fil(esc(c.nombre), mbTxt(c.mb))).join("")}</div>`}
+        ${x.papelera_mb != null ? `<div class="hoja-lista"><div class="fila"><span>Papelera<em>${x.papelera_mb ? mbTxt(x.papelera_mb) : "vacía"}</em></span>
+          <span class="acc">${x.papelera_mb ? peligro("papelera", 'data-h="papelera"', "Vaciar") : ""}</span></div></div>` : ""}` },
+
+    up: { tit: "Encendida", vivo: (d) => `<div class="hoja-grande"><b>${Math.floor(d.encendida_min / 60)}<small>h</small> ${d.encendida_min % 60}<small>min</small></b>
+        <span>Prendida desde ${fechaCorta((Date.now() - d.encendida_min * 60000) / 1000)}</span></div>
+        <div class="det">${fil("Equipo", esc(d.equipo))}${fil("Kernel", esc(d.kernel))}</div>
+        <div class="hoja-botones">${boton('data-lz="bloquear"', "Bloquear")}${boton('data-lz="suspender"', "Suspender")}
+          ${peligro("cerrar_sesion", 'data-lz="cerrar_sesion"', "Cerrar sesión")}${peligro("reiniciar", 'data-lz="reiniciar"', "Reiniciar")}${peligro("apagar", 'data-lz="apagar"', "Apagar")}</div>` },
+
+    win: { tit: "Ventanas abiertas", extra: true, vivo: (d, x) => !x.ventanas ? cargando : !x.ventanas.length
+      ? '<div class="sub">No hay ventanas abiertas.</div>'
+      : `<div class="hoja-lista">${x.ventanas.map(v => `<div class="fila"><span>${esc(v.titulo || v.app)}<em>${esc(v.app)}${v.escritorio ? " · escritorio " + esc(v.escritorio) : " · escondida"}</em></span>
+          <span class="acc">${boton(`data-h="ir" data-id="${v.id}"`, "Ir")}${peligro("w" + v.id, `data-h="cerrar" data-id="${v.id}"`, "Cerrar")}</span></div>`).join("")}</div>` },
+
+    bright: { tit: "Brillo", vivo: (d) => `<div class="hoja-grande"><b>${d.brillo ?? "—"}<small>%</small></b><span>Pantalla</span></div>`,
+      fijo: () => `<div class="hoja-rango"><input type="range" id="hBrillo" min="1" max="100" step="1" aria-label="Brillo"><b id="hBrilloTxt">—</b></div>
+        <div class="hoja-botones">${[10, 30, 60, 100].map(v => boton(`data-h="poner" data-pct="${v}"`, v + "%")).join("")}</div>`,
+      despues: (d) => { const r = $("hBrillo"); if (r && !hBrilloTocando && d.brillo != null) { r.value = d.brillo; set("hBrilloTxt", d.brillo + "%"); } } },
+
+    vol: { tit: "Volumen", extra: true, vivo: (d, x) => `<div class="hoja-grande"><b>${d.volumen.mudo ? "Mudo" : (d.volumen.pct ?? "—") + "<small>%</small>"}</b></div>
+        ${salidasLista(x)}<div class="hoja-botones">${boton('data-lz="volumen"', "Mezclador de sonido")}</div>`,
+      fijo: volFijo, despues: volDespues },
+
+    reloj: { tit: "Reloj", vivo: (d) => {
+      const t = d.temporizador, ahora = new Date();
+      return `<div class="hoja-grande"><b>${String(ahora.getHours()).padStart(2, "0")}:${String(ahora.getMinutes()).padStart(2, "0")}</b>
+          <span class="fecha">${DIAS[ahora.getDay()]} ${ahora.getDate()} de ${MESES[ahora.getMonth()]}</span></div>
+        ${calendario()}
+        <h4>Temporizador</h4>${t ? `<div class="hoja-grande"><b style="font-size:40px">${quedan(t.fin)}</b><span>de ${t.min} min · te aviso con una notificación</span></div>
+          <div class="hoja-botones">${boton('data-h="timer" data-min=""', "Cancelar", "peligro")}</div>`
+          : `<div class="hoja-botones">${[1, 3, 5, 10, 15, 30, 60].map(m => boton(`data-h="timer" data-min="${m}"`, m + " min")).join("")}</div>`}`;
+    } },
+
+    musica: { tit: "Música", extra: true, vivo: (d, x) => {
+      const mu = d.musica;
+      return `<div class="mus-hoja">${mu && mu.portada ? `<img src="${esc(mu.portada)}" alt="">` : `<div class="mus-art">${svgIco("music")}</div>`}
+          <div><b>${esc(mu && mu.titulo ? mu.titulo : "Nada sonando")}</b><span class="sub">${esc(mu ? [mu.artista, mu.album].filter(Boolean).join(" · ") : "Abrí YouTube Music o un video")}</span></div></div>
+        <div class="mus-ctl">${boton('data-mus="previous" aria-label="Anterior"', svgIco("prev"))}${boton('data-mus="play-pause" aria-label="Reproducir o pausar"', svgIco(mu && mu.estado === "Playing" ? "pause" : "playic"), "prin")}${boton('data-mus="next" aria-label="Siguiente"', svgIco("next"))}</div>
+        ${salidasLista(x)}<div class="hoja-botones">${boton('data-abrir="app:ytmusic.desktop"', "Abrir YT Music")}</div>`;
+    }, fijo: volFijo, despues: volDespues },
+
+    youtube: { tit: "YouTube", ancha: true, alAbrir: () => cargarYT(true), vivo: () => !ytDatos ? cargando
+      : `<div class="yt yt-hoja">${ytDatos.videos.map(v => `<button type="button" class="vid" data-vid="${esc(v.id)}">
+          <img src="https://i.ytimg.com/vi/${esc(v.id)}/mqdefault.jpg" alt="" loading="lazy"><span>${esc(v.titulo)}</span><em>${esc(v.canal)} · ${hace(Date.parse(v.fecha))}</em></button>`).join("")}</div>
+        <h4>Canales</h4><div class="yt-canales">${ytDatos.canales.map(c => `<span>${esc(c.nombre)}<button type="button" data-ytrm="${esc(c.id)}" aria-label="Quitar ${esc(c.nombre)}">✕</button></span>`).join("")}</div>`,
+      fijo: () => `<div class="hoja-ip"><div class="cfg"><input id="hYt" type="text" spellcheck="false" placeholder="@canal (ej. @JohnDeere)">${boton('data-yt="agregar"', "Agregar canal")}</div></div>` },
+
+    mapa: { tit: "Mapa", ancha: true, mapa: () => mapaUrl(mapaInfo), vivo: () => {
+      const m = mapaInfo; if (!m) return cargando;
+      const por = m.fuente === "ip" ? "Aproximado: es donde sale tu conexión a internet (la laptop no tiene GPS)."
+        : m.fuente === "fijo" ? "Este lugar lo elegiste vos."
+        : m.motivo === "movil" ? "Estás con datos del celular, y así internet no dice dónde estás. Mientras tanto, cada día te muestro un lugar perdido del mundo."
+        : m.motivo === "error" ? "No pude averiguar dónde estás (¿hay internet?). Mientras tanto, un lugar del mundo."
+        : m.motivo === "buscando" || m.buscando ? "Averiguando dónde estás…" : "Un lugar perdido del mundo, uno por día.";
+      return `<div class="hoja-grande"><b style="font-size:32px">${esc(m.nombre)}</b><span>${esc(m.pais || "")}</span><span class="etq ok">${FUENTE_MAPA[m.fuente] || ""}</span></div>
+        ${m.dato ? `<div class="mapa-dato">${esc(m.dato)}</div>` : ""}<div class="hoja-aviso">${por}</div>
+        <div class="hoja-botones">${boton('data-mp="buscar"', m.buscando ? "Buscando…" : "¿Dónde estoy?", "prin")}${boton('data-mp="otro"', "Otro lugar")}
+          ${boton('data-mp="gmaps"', "Abrir en Google Maps")}</div>`;
+    }, fijo: () => `<div class="hoja-ip"><label for="hMapa">Fijar un lugar (queda hasta que toques “¿Dónde estoy?”)</label>
+        <div class="cfg"><input id="hMapa" type="text" spellcheck="false" placeholder="Por ejemplo: Tacuarembó, Uruguay">${boton('data-mp="fijo"', "Fijar")}</div></div>` },
+
+    opc: { tit: "Operations Center", ancha: true, mapa: () => {
+      const m = hojaSel && deere && (deere.flota.maquinas || []).find(x => x.id === hojaSel);
+      return m && m.lugar ? `https://maps.google.com/maps?q=${m.lugar.lat},${m.lugar.lon}&t=k&z=15&output=embed` : "";
+    }, vivo: () => {
+      if (!deere || !deere.flota) return cargando;
+      const f = deere.flota, maq = f.maquinas || [], m = hojaSel && maq.find(x => x.id === hojaSel);
+      if (m) return `<div class="hoja-botones">${boton('data-maq=""', "‹ Todas las máquinas")}</div>
+        <div class="hoja-grande"><b style="font-size:34px">${esc(m.nombre)}</b><span>${esc([m.tipo, m.modelo, m.anio].filter(Boolean).join(" · "))}</span></div>
+        <div class="det">${fil("Horas de motor", m.horas ? `${horasTxt(m)} <span class="sub">(${hace(m.horas.cuando)})</span>` : "—")}
+          ${fil("Última posición", m.lugar ? hace(m.lugar.cuando) : "Sin datos")}${m.lugar ? fil("Coordenadas", `${m.lugar.lat.toFixed(5)}, ${m.lugar.lon.toFixed(5)}`) : ""}</div>
+        <h4>Alertas de los últimos 7 días</h4>${m.alertas.length ? `<div class="hoja-lista">${m.alertas.map(a => `<div class="fila">
+          <span><span class="etq ${a.color === "RED" ? "crit" : a.color === "YELLOW" ? "warn" : ""}">${esc(a.codigo || a.modulo || "Alerta")}</span> ${esc(a.descripcion)}${a.veces > 1 ? `<em>×${a.veces}</em>` : ""}</span>
+          <b class="sub">${hace(a.cuando)}</b></div>`).join("")}</div>` : '<div class="sub">Sin alertas.</div>'}
+        <div class="hoja-botones">${m.lugar ? boton(`data-jd="llegar" data-id="${esc(m.id)}"`, "Cómo llegar", "prin") : ""}${boton('data-jd="opc"', "Abrir en Operations Center")}</div>`;
+      const orgs = deere.orgs || [];
+      return `${orgs.length > 1 ? `<div class="hoja-orgs">${orgs.map(o => `<button type="button" class="chip" data-jd="org" data-id="${esc(o.id)}" aria-pressed="${o.id === f.org}">${esc(o.nombre)}</button>`).join("")}</div>` : ""}
+        <div class="sub">${f.error ? esc(DEERE_ERR[f.error]) : f.cargando ? "Pidiendo datos a Deere…" : `${maq.length} equipos · actualizado ${hace(f.t * 1000)}`}</div>
+        <div class="hoja-lista">${maq.map(m => `<button type="button" class="jd-fila" data-maq="${esc(m.id)}"${m.telemetria ? "" : ' style="opacity:.55"'}>
+          <i class="luz-chica ${maqLuz(m)}"></i><span>${esc(m.nombre)} <span class="sub">${esc(m.modelo)}</span></span>
+          <em>${m.telemetria ? `${horasTxt(m)}${m.lugar ? " · " + hace(m.lugar.cuando) : ""}${m.alertas.length ? ` · ${m.alertas.length} alerta${m.alertas.length > 1 ? "s" : ""}` : ""}` : "sin JDLink"}</em></button>`).join("")}</div>
+        <div class="hoja-botones">${boton(`data-jd="actualizar"${f.cargando ? " disabled" : ""}`, "Actualizar")}${boton('data-jd="opc"', "Abrir Operations Center", "prin")}</div>
+        <div class="hoja-aviso">Verde: reportó en las últimas 24 h. Amarillo: hace menos de una semana, o tiene alertas. Rojo: alerta grave. Solo lectura: desde acá no se cambia nada en Deere.</div>`;
+    } },
+
+    jdfiles: { tit: "Deere Files", ancha: true,
+      alAbrir: () => api("/api/web/archivos?id=files").then(l => { if (hoja === "jdfiles" && Array.isArray(l)) { hojaExtra.descargas = l; pintarHoja(ultimo); } }).catch(() => {}),
+      vivo: (d, x) => {
+        if (!deere || !deere.archivos) return cargando;
+        const a = deere.archivos, l = a.lista || [];
+        return `<div class="sub">${a.error ? esc(DEERE_ERR[a.error]) : a.cargando ? "Pidiendo archivos a Deere…" : `${l.length} archivos en ${esc(orgNombre())}`}</div>
+          <div class="hoja-lista">${l.map(f => `<div class="fila"><span>${esc(f.nombre)}<em>${esc(f.tipo.toLowerCase())}${f.tam ? " · " + tamCorto(f.tam) : ""}</em></span>
+            <span class="acc">${f.pendiente ? '<span class="etq warn">enviando</span>' : ""}<b class="sub">${f.fecha ? fechaCorta(f.fecha / 1000) : ""}</b></span></div>`).join("")}</div>
+          ${x.descargas && x.descargas.length ? `<h4>Descargadas en esta compu</h4><div class="web-arch-lista">${x.descargas.map(f => `<button type="button" class="arch" data-arch="${esc(f.nombre)}">
+            <span>${esc(f.nombre)}</span><em>${fechaCorta(f.fecha)} · ${tamCorto(f.tam)} · tocá para copiar la ruta</em></button>`).join("")}</div>` : ""}
+          <div class="hoja-botones">${boton('data-jd="files" data-id="rx"', "Prescripciones", "prin")}${boton('data-jd="files"', "Abrir Deere Files")}${boton(`data-jd="actualizar"${a.cargando ? " disabled" : ""}`, "Actualizar")}</div>`;
+      } },
+
+    amfbot: { tit: (d) => (d.amfbot || {}).nombre || "Bot", fijo: (d) => {
+      const bot = d.amfbot || {};
+      return !bot.host ? "" : `<div class="hoja-ip">
         <label for="hojaIp">IP de ${esc(bot.dispositivo || "el celular")}</label>
         <div class="cfg"><input id="hojaIp" type="text" inputmode="decimal" spellcheck="false" value="${esc(bot.host)}">
           <button type="button" class="chip" data-bot="ip">Guardar</button></div>
         <div class="hoja-aviso">${bot.puede_buscar ? `Si ${esc(bot.dispositivo || "el celular")} cambió de red, lo busco solo. Si no lo encuentro, ` : `Si ${esc(bot.dispositivo || "el celular")} cambió de red, la IP cambia: `}en Termux escribí <code>ifconfig</code>
           y copiá el número que sigue a <code>inet</code> y empieza igual que el de esta compu.</div></div>`;
-    } else {
-      set("hojaTit", "Bluetooth");
-    }
-    pintarHoja(ultimo);
-    $("hoja").hidden = false;
-  }
-  function cerrarHoja() { hoja = null; $("hoja").hidden = true; }
-  function pintarHoja(d) {
-    if (!hoja || !d) return;
-    let html = "";
-    if (hoja === "amfbot") {
-      const bot = d.amfbot || {}, ocupado = !!bot.trabajo;
-      const dis = ocupado ? " disabled" : "";
-      html = `<div class="bt-cab"><span class="bot-luz ${botLuz(bot)}"></span><span class="bot-txt">${esc(botTxt(bot))}</span></div>
+    }, vivo: (d) => {
+      const bot = d.amfbot || {}, dis = bot.trabajo ? " disabled" : "";
+      return `<div class="bt-cab"><span class="bot-luz ${botLuz(bot)}"></span><span class="bot-txt">${esc(botTxt(bot))}</span></div>
         <div class="sub">${esc(botResumen(bot))}</div>
         ${botDetalle(bot).length ? `<div class="det">${botDetalle(bot).map(ln => `<div class="fila"><span>${esc(ln)}</span></div>`).join("")}</div>` : ""}
         <div class="hoja-botones">
@@ -1548,28 +1880,78 @@
           <button type="button" class="chip" data-bot="revisar"${dis}>${bot.trabajo === "revisar" ? "Revisando…" : "Revisar ahora"}</button>
           ${bot.host ? `<button type="button" class="chip" data-bot="terminal">Entrar por SSH</button>` : ""}
         </div>`;
-    } else {
+    }, despues: (d) => {
+      // Si la IP cambió sola (la encontró buscando), el campo la muestra, salvo que la estés escribiendo
+      const ip = $("hojaIp"), host = (d.amfbot || {}).host;
+      if (ip && host && document.activeElement !== ip && ip.dataset.host !== host) { ip.dataset.host = host; ip.value = host; }
+    } },
+
+    bt: { tit: "Bluetooth", vivo: (d) => {
       const bt = d.bluetooth || {}, tr = bt.trabajo || {}, ocupado = !!tr.que;
-      html = `<div class="bt-cab"><span class="bot-luz ${btLuz(bt)}"></span><span class="bot-txt">${esc(btTxt(bt))}</span>
+      return `<div class="bt-cab"><span class="bot-luz ${btLuz(bt)}"></span><span class="bot-txt">${esc(btTxt(bt))}</span>
           ${bt.hay ? `<button type="button" class="chip" data-bt="${bt.prendido ? "apagar" : "prender"}"${ocupado ? " disabled" : ""}>${bt.prendido ? "Apagar" : "Prender"}</button>` : ""}</div>
         <div class="sub">${esc(btResumen(bt))}</div>
         <div class="bt-lista">${btFilas(bt)}</div>
         <div class="hoja-botones"><button type="button" class="chip prin" data-bt="buscar"${ocupado || !bt.prendido ? " disabled" : ""}>${
           tr.que === "buscar" ? "Buscando…" : "Buscar nuevos"}</button></div>
         ${bt.prendido && (bt.dispositivos || []).length ? '<div class="hoja-aviso">Para un parlante o auriculares nuevos: ponelos en modo emparejar (suele ser mantener apretado el botón de Bluetooth), tocá <b>Buscar</b> y después <b>Vincular</b>.</div>' : ""}`;
-    }
+    } }
+  };
+
+  function pedirExtra() {
+    clearTimeout(hojaExtraTimer);
+    const k = hoja; if (!k || !HOJAS[k].extra) return;
+    api("/api/extra?k=" + k).then(x => { if (hoja !== k) return; Object.assign(hojaExtra, x); pintarHoja(ultimo); })
+      .catch(() => {})
+      .finally(() => { if (hoja === k) hojaExtraTimer = setTimeout(pedirExtra, HOJAS[k].cada || 3000); });
+  }
+  function abrirHoja(k) {
+    const h = HOJAS[k]; if (!h) return;
+    const d = ultimo || {};
+    hoja = k; hojaSel = null; hojaExtra = {}; hojaArmado = null;
+    $("hojaVivo").dataset.html = "";
+    $("hojaFijo").innerHTML = h.fijo ? h.fijo(d) : "";
+    $("hoja").classList.toggle("ancha", !!h.ancha);
+    set("hojaTit", typeof h.tit === "function" ? h.tit(d) : h.tit);
+    if (h.alAbrir) h.alAbrir();
+    if (k === "opc" || k === "jdfiles") cargarDeere();
+    pintarHoja(ultimo);
+    $("hoja").hidden = false;
+    pedirExtra();
+  }
+  function cerrarHoja() {
+    hoja = null; hojaSel = null; clearTimeout(hojaExtraTimer);
+    $("hoja").hidden = true;
+    const f = $("hojaMapa").querySelector("iframe");
+    $("hojaMapa").hidden = true; f.dataset.url = ""; f.removeAttribute("src");
+  }
+  function pintarHoja(d) {
+    if (!hoja || !d) return;
+    const h = HOJAS[hoja];
+    const html = h.vivo(d, hojaExtra);
     const vivo = $("hojaVivo");
     if (vivo.dataset.html !== html) { vivo.dataset.html = html; vivo.innerHTML = html; }
-    // Si la IP cambió sola (la encontró buscando), el campo la muestra, salvo que la estés escribiendo
-    const ip = $("hojaIp"), host = (d.amfbot || {}).host;
-    if (ip && host && document.activeElement !== ip && ip.dataset.host !== host) { ip.dataset.host = host; ip.value = host; }
+    const url = h.mapa ? h.mapa(d) : "";
+    const caja = $("hojaMapa"), f = caja.querySelector("iframe");
+    caja.hidden = !url;
+    if (url && f.dataset.url !== url) { f.dataset.url = url; f.src = url; }
+    if (h.despues) h.despues(d);
   }
   $("hojaCerrar").addEventListener("click", cerrarHoja);
   $("hoja").addEventListener("click", (e) => {
     if (e.target === $("hoja")) { cerrarHoja(); return; }   // tocar afuera de la caja
     const b = e.target.closest("button"); if (!b || b.disabled) return;
-    if (b.dataset.bt) { api("/api/bluetooth", { que: b.dataset.bt, mac: b.dataset.mac || null }).then(actualizar).catch(() => {}); return; }
-    if (b.dataset.bot === "ip") {
+    const ds = b.dataset, k = hoja;
+    if (ds.armar) {
+      hojaArmado = ds.armar; clearTimeout(hojaArmadoT);
+      hojaArmadoT = setTimeout(() => { hojaArmado = null; pintarHoja(ultimo); }, 3000);
+      pintarHoja(ultimo);
+      return;
+    }
+    hojaArmado = null;
+    const listo = () => { actualizar(); pedirExtra(); };
+    if (ds.bt) { api("/api/bluetooth", { que: ds.bt, mac: ds.mac || null }).then(actualizar).catch(() => {}); return; }
+    if (ds.bot === "ip") {
       const v = $("hojaIp").value.trim(); if (!v) return;
       api("/api/bot", { que: "ip", valor: v }).then(r => {
         $("hojaIp").classList.toggle("mal", !r.ok);
@@ -1577,17 +1959,81 @@
       }).catch(() => {});
       return;
     }
-    if (b.dataset.bot) {
-      api("/api/bot", { que: b.dataset.bot }).then(() => { if (b.dataset.bot === "terminal") cerrarHoja(); actualizar(); }).catch(() => {});
+    if (ds.bot) { api("/api/bot", { que: ds.bot }).then(() => { if (ds.bot === "terminal") cerrarHoja(); actualizar(); }).catch(() => {}); return; }
+    if (ds.lz) {
+      api("/api/lanzar", { que: ds.lz }).then(actualizar).catch(() => {});
+      if (!["brillo_mas", "brillo_menos"].includes(ds.lz)) cerrarHoja();
+      return;
+    }
+    if (ds.abrir) { api("/api/lanzar", { que: ds.abrir }).catch(() => {}); cerrarHoja(); return; }
+    if (ds.mus) { api("/api/musica", { accion: ds.mus }).then(actualizar).catch(() => {}); return; }
+    if (ds.mute) { api("/api/musica", { accion: "silencio" }).then(actualizar).catch(() => {}); return; }
+    if (ds.vid) { api("/api/video", { id: ds.vid }).catch(() => {}); cerrarHoja(); return; }
+    if (ds.ytrm) { api("/api/yt/quitar", { id: ds.ytrm }).then(() => { ytDatos = null; cargarYT(true); setTimeout(() => pintarHoja(ultimo), 1500); }).catch(() => {}); return; }
+    if (ds.yt) {
+      const h = $("hYt").value.trim(); if (!h) return;
+      b.textContent = "Buscando…";
+      api("/api/yt/agregar", { handle: h })
+        .then(r => { if (r.error) throw 0; $("hYt").value = ""; return api("/api/youtube"); })
+        .then(d => { ytDatos = d; ytHora = Date.now(); pintarHoja(ultimo); })
+        .catch(() => { $("hYt").value = ""; $("hYt").placeholder = "No encontré ese canal, probá de nuevo"; })
+        .finally(() => { b.textContent = "Agregar canal"; });
+      return;
+    }
+    if (ds.h) {
+      const cuerpo = { k, que: ds.h };
+      if (ds.red) cuerpo.red = ds.red;
+      if (ds.id) cuerpo.id = Number(ds.id);
+      if (ds.nombre) cuerpo.nombre = ds.nombre;
+      if (ds.pct) cuerpo.pct = Number(ds.pct);
+      if ("min" in ds) cuerpo.min = ds.min ? Number(ds.min) : null;
+      api("/api/hoja", cuerpo).then(listo).catch(() => {});
+      if (ds.h === "ir" || ds.h === "otra") cerrarHoja();
+      return;
+    }
+    if (ds.mp) {
+      const cuerpo = { que: ds.mp };
+      if (ds.mp === "fijo") { cuerpo.lugar = $("hMapa").value.trim(); if (!cuerpo.lugar) return; $("hMapa").value = ""; }
+      api("/api/mapa", cuerpo).then(cargarMapa).catch(() => {});
+      if (ds.mp === "gmaps") cerrarHoja();
+      return;
+    }
+    if ("maq" in ds) { hojaSel = ds.maq || null; pintarHoja(ultimo); $("hoja").querySelector(".hoja-cuerpo").scrollTop = 0; return; }
+    if (ds.jd) {
+      api("/api/deere", { que: ds.jd, id: ds.id || null }).then(cargarDeere).catch(() => {});
+      if (["opc", "files", "llegar"].includes(ds.jd)) cerrarHoja();
+      return;
+    }
+    if (ds.arch) {
+      api("/api/web/copiar", { id: "files", nombre: ds.arch }).then(r => {
+        if (!r.ok) return;
+        const em = b.querySelector("em"); em.textContent = "Ruta copiada: pegala con Ctrl+L al subir"; b.classList.add("copiado");
+      }).catch(() => {});
     }
   });
-  $("hoja").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "hojaIp") $("hoja").querySelector('[data-bot="ip"]').click(); });
-  // Tocar el panel (no sus botones) abre el menú
+  $("hoja").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    const btn = { hojaIp: '[data-bot="ip"]', hMapa: '[data-mp="fijo"]', hYt: "[data-yt]" }[e.target.id];
+    if (btn) $("hoja").querySelector(btn).click();
+  });
+  // Deslizadores del menú (brillo y volumen): mandan el valor un ratito después de moverlos
+  let hBrilloTocando = false, hVolTocando = false, hDeslizTimer = null;
+  document.addEventListener("input", (e) => {
+    const id = e.target.id; if (id !== "hBrillo" && id !== "hVol") return;
+    const v = Number(e.target.value);
+    if (id === "hBrillo") { hBrilloTocando = true; set("hBrilloTxt", v + "%"); } else { hVolTocando = true; set("hVolTxt", v + "%"); }
+    clearTimeout(hDeslizTimer);
+    hDeslizTimer = setTimeout(() => {
+      (id === "hBrillo" ? api("/api/hoja", { k: "bright", que: "poner", pct: Math.max(1, v) }) : api("/api/musica", { accion: "volumen", pct: v }))
+        .catch(() => {}).finally(() => setTimeout(() => { hBrilloTocando = hVolTocando = false; }, 1500));
+    }, 120);
+  });
+  // Tocar el panel (no sus botones) abre su menú
   $("modules").addEventListener("click", (e) => {
     if (editing || performance.now() - deslizado < 400) return;
-    if (e.target.closest("button, input, textarea, a")) return;
-    const m = e.target.closest('.mod[data-k="bt"], .mod[data-k="amfbot"]');
-    if (m) abrirHoja(m.dataset.k);
+    if (e.target.closest("button, input, textarea, a, iframe")) return;
+    const m = e.target.closest(".mod");
+    if (m && HOJAS[m.dataset.k]) abrirHoja(m.dataset.k);
   });
 
   function pintar(d) {
@@ -1746,7 +2192,9 @@
     }).catch(() => { $("offline").hidden = false; });
   }
 
-  api("/api/web").then(registrarWeb).catch(() => {}).then(() => api("/api/estado")).then(e => {
+  api("/api/web").then(registrarWeb).catch(() => {})
+    .then(() => api("/api/deere")).then(registrarDeere).catch(() => {})
+    .then(() => api("/api/estado")).then(e => {
     const limpiar = (lista) => lista
       .filter(p => p && MODS[p.k])
       .map(p => {
@@ -1765,7 +2213,6 @@
     setMode(e.modo === "noche" ? "noche" : "dia", false);
     if (typeof e.sonido === "boolean") sonido = e.sonido;
     if (typeof e.notas === "string") notasTexto = e.notas;
-    if (typeof e.mapa === "string" && e.mapa) mapaLugar = e.mapa;
     if (Array.isArray(e.favoritas)) favoritas = e.favoritas.filter(x => typeof x === "string");
   }).catch(() => setMode("dia", false)).finally(() => {
     renderModules();
@@ -1773,6 +2220,10 @@
     if (/^#p\d$/.test(location.hash)) irA(Number(location.hash[2]) - 1);
     actualizar();
     setInterval(actualizar, 2000);
+    cargarMapa();
+    cargarDeere();
+    setInterval(cargarMapa, 600000);
+    setInterval(() => { if (!hoja && vista === "run") cargarDeere(); }, 60000);
   });
 })();
 </script>

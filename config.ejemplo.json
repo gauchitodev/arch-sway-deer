@@ -33,5 +33,11 @@
         "dias": 7
       }
     }
-  ]
+  ],
+  "deere": null,
+  "deere_ejemplo": {
+    "org": "123456",
+    "app_opc": "operations-center.desktop",
+    "app_files": "deere-files.desktop"
+  }
 }
