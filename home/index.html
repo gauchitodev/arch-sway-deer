@@ -1040,6 +1040,16 @@
     desarmarBorrar();
     renderModules();
   }
+  // La ventana queda abierta cuando la escondés (Super+G). Si volvés después de un rato,
+  // arranca de nuevo en la Run Page 1, con los menús cerrados, en vez de donde quedó.
+  let afuera = 0;
+  window.addEventListener("blur", () => { afuera = Date.now(); });
+  window.addEventListener("focus", () => {
+    if (!afuera || Date.now() - afuera < 30000 || editing) return;
+    cerrarHoja(); $("huevo").hidden = true;
+    if (vista !== "run") mostrar("run");
+    if (pg !== 0) irA(0);
+  });
   $("pgPrev").addEventListener("click", () => deslizarA(-1));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && vista === "menu") mostrar("run"); });
   $("pgNext").addEventListener("click", () => deslizarA(1));
