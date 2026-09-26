@@ -1475,6 +1475,7 @@
   // ---------- Bot: lo mismo se muestra en el panel y en su menú ----------
   const botLuz = (bot) => ({ andando: "ok", detenido: "mal", sin_conexion: "duda" }[bot.estado] || "");
   const botTxt = (bot) => bot.trabajo === "arrancar" ? "Arrancando…" : bot.trabajo === "revisar" ? "Revisando…"
+    : bot.trabajo === "buscar" ? "Buscando…"
     : { andando: "Andando", detenido: "Detenido", sin_conexion: "Sin señal", revisando: "Revisando…", sin_configurar: "Sin configurar" }[bot.estado] || "—";
   function botResumen(bot) {
     let sub = `Preguntando a ${bot.dispositivo}`;
@@ -1482,7 +1483,10 @@
     if (bot.estado === "andando") sub = bot.segundos != null ? `Hace ${durBot(Math.round(bot.segundos / 60))} sin parar` : "Corriendo";
     if (bot.estado === "detenido") sub = `Revisá ${bot.dispositivo}`;
     if (bot.estado === "sin_conexion") sub = `No encuentro ${bot.dispositivo} en la red`;
+    if (bot.estado === "sin_conexion" && bot.error === "buscar") sub = `No encontré ${bot.dispositivo} en la red: ¿está prendido, con Termux y sshd?`;
+    if (bot.estado === "andando" && bot.encontrado === bot.host) sub += ` · IP nueva: ${bot.host}`;
     if (bot.error === "arrancar") sub = "No se pudo arrancar el bot";
+    if (bot.trabajo === "buscar") return `Buscando ${bot.dispositivo} en la red…`;
     if (bot.revisado) sub += ` · ${bot.revisado}`;
     return sub;
   }
@@ -1501,7 +1505,7 @@
         <label for="hojaIp">IP de ${esc(bot.dispositivo || "el celular")}</label>
         <div class="cfg"><input id="hojaIp" type="text" inputmode="decimal" spellcheck="false" value="${esc(bot.host)}">
           <button type="button" class="chip" data-bot="ip">Guardar</button></div>
-        <div class="hoja-aviso">Si ${esc(bot.dispositivo || "el celular")} cambió de red, la IP cambia. En Termux escribí <code>ifconfig</code>
+        <div class="hoja-aviso">${bot.puede_buscar ? `Si ${esc(bot.dispositivo || "el celular")} cambió de red, lo busco solo. Si no lo encuentro, ` : `Si ${esc(bot.dispositivo || "el celular")} cambió de red, la IP cambia: `}en Termux escribí <code>ifconfig</code>
           y copiá el número que sigue a <code>inet</code> y empieza igual que el de esta compu.</div></div>`;
     } else {
       set("hojaTit", "Bluetooth");
@@ -1520,6 +1524,7 @@
         <div class="sub">${esc(botResumen(bot))}</div>
         <div class="hoja-botones">
           ${bot.puede_arrancar && bot.estado === "detenido" ? `<button type="button" class="chip prin" data-bot="arrancar"${dis}>Arrancar el bot</button>` : ""}
+          ${bot.puede_buscar && bot.estado === "sin_conexion" ? `<button type="button" class="chip prin" data-bot="buscar"${dis}>Buscar en la red</button>` : ""}
           <button type="button" class="chip" data-bot="revisar"${dis}>${bot.trabajo === "revisar" ? "Revisando…" : "Revisar ahora"}</button>
           ${bot.host ? `<button type="button" class="chip" data-bot="terminal">Entrar por SSH</button>` : ""}
         </div>`;
@@ -1535,6 +1540,9 @@
     }
     const vivo = $("hojaVivo");
     if (vivo.dataset.html !== html) { vivo.dataset.html = html; vivo.innerHTML = html; }
+    // Si la IP cambió sola (la encontró buscando), el campo la muestra, salvo que la estés escribiendo
+    const ip = $("hojaIp"), host = (d.amfbot || {}).host;
+    if (ip && host && document.activeElement !== ip && ip.dataset.host !== host) { ip.dataset.host = host; ip.value = host; }
   }
   $("hojaCerrar").addEventListener("click", cerrarHoja);
   $("hoja").addEventListener("click", (e) => {

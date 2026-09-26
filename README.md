@@ -163,7 +163,15 @@ El `comando` corre en el otro equipo: tiene que salir con `0` si el bot anda (y 
 segundos lleva andando) y con `1` si está detenido. Hace falta entrar por SSH **con llave**, sin contraseña.
 
 Tocando el panel se abre un menú para revisar ahora, entrar por SSH en una terminal, cambiar la IP
-(si el celular cambió de red) y, si pusiste `arrancar` (opcional), levantar el bot cuando está detenido.
+a mano y, si pusiste `arrancar` (opcional), levantar el bot cuando está detenido.
+
+**Si el celular cambia de red (y de IP), lo busca solo.** La primera vez que se conecta bien, guarda la
+huella SSH del celular en `~/.ssh/known_hosts` con el nombre `g5-bot`. Cuando lo pierde, busca en tu red
+quién tiene abierto el puerto y prueba SSH exigiendo esa huella: si no coincide, ssh corta antes de mandar
+tu llave, así que nunca entra a otro aparato. Al encontrarlo, actualiza `local/config.json`.
+
+Para entrar desde la terminal con la IP al día: `home/bot-ssh.sh` (o con un comando atrás,
+`home/bot-ssh.sh uptime`). Podés hacerle un atajo, por ejemplo `ln -s ~/.config/g5/home/bot-ssh.sh ~/.local/bin/mibot`.
 
 ## Paneles web (opcional)
 
