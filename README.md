@@ -43,6 +43,8 @@ Pantalla de login (opcional) para compus con dos usuarios: cada uno de un lado d
 - **Pantalla de inicio** (`Super+G`), pensada para el dedo:
   - **Run Pages** (como les dice el monitor) con paneles libres: en **Editar** los arrastrás a donde quieras y los agrandás
     desde la esquina amarilla (con el dedo o el mouse), con imán cada 16 px para que queden alineados.
+    Los paneles no se enciman (se frenan o resbalan contra el de al lado), no se achican más de lo que
+    su contenido deja, y uno nuevo va al primer hueco libre.
     Mientras editás, la bandeja amarilla ocupa el lugar de la barra de abajo, así la página no se mueve:
     lo que ves es lo que queda.
   - **Deslizar para cambiar de página**: la página sigue al dedo, como en el celular. También con dos dedos
@@ -102,6 +104,8 @@ Se puede correr las veces que quieras.
 | Mover un panel | **Editar** y arrastrarlo |
 | Agrandar o achicar un panel | **Editar** y tirar de la esquina amarilla de abajo a la derecha |
 | Agregar o quitar paneles | **Editar** → **+ Agregar panel**, o la ✕ roja de cada panel |
+| Buscar y vincular un parlante | tocar el panel de **Bluetooth** (se abre su menú, aunque el panel sea chico) |
+| Revisar el bot, entrar por SSH o cambiarle la IP | tocar el panel del **bot** |
 | Adelantar un tema | arrastrar la barra del panel de música |
 | Menú de apps | botón verde **Menú** (se cierra con la X amarilla o Esc) |
 | Calculadora | tecla de calculadora (otra vez la cierra); Ctrl+C copia el resultado |
@@ -149,13 +153,17 @@ Se configura en `local/config.json`, que no se sube al repo:
     "dispositivo": "el celular",
     "destino": "usuario@192.168.1.50",
     "puerto": 8022,
-    "comando": "pgrep -f mi-bot.js >/dev/null || exit 1"
+    "comando": "pgrep -f mi-bot.js >/dev/null || exit 1",
+    "arrancar": "cd ~/mi-bot && nohup node mi-bot.js >/dev/null 2>&1 &"
   }
 }
 ```
 
 El `comando` corre en el otro equipo: tiene que salir con `0` si el bot anda (y puede imprimir cuántos
 segundos lleva andando) y con `1` si está detenido. Hace falta entrar por SSH **con llave**, sin contraseña.
+
+Tocando el panel se abre un menú para revisar ahora, entrar por SSH en una terminal, cambiar la IP
+(si el celular cambió de red) y, si pusiste `arrancar` (opcional), levantar el bot cuando está detenido.
 
 ## Paneles web (opcional)
 

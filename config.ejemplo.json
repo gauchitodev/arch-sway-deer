@@ -5,7 +5,8 @@
     "dispositivo": "el celular",
     "destino": "usuario@192.168.1.50",
     "puerto": 8022,
-    "comando": "pgrep -f mi-bot.js >/dev/null || exit 1"
+    "comando": "pgrep -f mi-bot.js >/dev/null || exit 1",
+    "arrancar": "cd ~/mi-bot && nohup node mi-bot.js >/dev/null 2>&1 &"
   },
   "web": [],
   "web_ejemplo": [

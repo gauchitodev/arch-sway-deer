@@ -514,7 +514,25 @@ def ventanas():
 
 
 _amfbot = {"estado": "revisando" if BOT else "sin_configurar", "segundos": None, "revisado": None,
-           "nombre": BOT.get("nombre", "Bot"), "dispositivo": BOT.get("dispositivo", "el celular")}
+           "nombre": BOT.get("nombre", "Bot"), "dispositivo": BOT.get("dispositivo", "el celular"),
+           "trabajo": None, "error": None}
+_amfbot_ya = threading.Event()   # "revisá ahora", sin esperar los 30 s
+HOST = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?")
+
+
+def _bot_ssh(comando, timeout=20):
+    ssh = ["ssh", "-p", str(BOT.get("puerto", 22)), "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", BOT["destino"]]
+    return subprocess.run(ssh + [comando], capture_output=True, text=True, timeout=timeout)
+
+
+def _bot_info():
+    """Lo que ve la página: estado más a qué equipo pregunta y qué se puede hacer."""
+    info = dict(_amfbot)
+    if BOT.get("destino"):
+        info["host"] = BOT["destino"].split("@")[-1]
+        info["puerto"] = BOT.get("puerto", 22)
+    info["puede_arrancar"] = bool(BOT.get("arrancar"))
+    return info
 
 
 def _vigilar_amfbot():
@@ -524,10 +542,10 @@ def _vigilar_amfbot():
         return
     if not BOT:
         return
-    ssh = ["ssh", "-p", str(BOT.get("puerto", 22)), "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", BOT["destino"]]
     while True:
+        _amfbot_ya.clear()
         try:
-            r = subprocess.run(ssh + [BOT["comando"]], capture_output=True, text=True, timeout=20)
+            r = _bot_ssh(BOT["comando"])
             if r.returncode == 0:
                 nums = [int(x) for x in r.stdout.split() if x.isdigit()]
                 estado, seg = "andando", (nums[0] if nums else None)
@@ -538,7 +556,70 @@ def _vigilar_amfbot():
         except (OSError, subprocess.SubprocessError):
             estado, seg = "sin_conexion", None
         _amfbot.update(estado=estado, segundos=seg, revisado=time.strftime("%H:%M"))
-        time.sleep(30)
+        if _amfbot.get("trabajo") == "revisar":
+            _amfbot["trabajo"] = None
+        _amfbot_ya.wait(30)
+
+
+def _bot_arrancar():
+    try:
+        r = _bot_ssh(BOT["arrancar"], timeout=30)
+        _amfbot["error"] = None if r.returncode == 0 else "arrancar"
+    except (OSError, subprocess.SubprocessError):
+        _amfbot["error"] = "arrancar"
+    time.sleep(8)   # que el proceso termine de levantar antes de preguntar
+    _amfbot["trabajo"] = "revisar"
+    _amfbot_ya.set()
+
+
+def _bot_cambiar_host(host):
+    """Cambia la IP (o nombre) del celular en local/config.json, sin tocar el resto."""
+    try:
+        with open(LOCAL) as f:
+            cfg = json.load(f)
+    except (OSError, ValueError):
+        return False
+    if not isinstance(cfg.get("bot"), dict):
+        return False
+    usuario = BOT["destino"].split("@")[0] + "@" if "@" in BOT["destino"] else ""
+    BOT["destino"] = cfg["bot"]["destino"] = usuario + host
+    tmp = LOCAL + ".tmp"
+    try:
+        with open(tmp, "w") as f:
+            json.dump(cfg, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+        os.chmod(tmp, os.stat(LOCAL).st_mode & 0o777)
+        os.replace(tmp, LOCAL)
+    except OSError:
+        return False
+    return True
+
+
+def bot_accion(que, valor=None):
+    if DEMO or not BOT.get("destino"):
+        return False
+    if que != "terminal" and _amfbot.get("trabajo"):
+        return False
+    if que == "revisar":
+        _amfbot.update(trabajo="revisar", error=None)
+        _amfbot_ya.set()
+        return True
+    if que == "arrancar" and BOT.get("arrancar"):
+        _amfbot.update(trabajo="arrancar", error=None)
+        threading.Thread(target=_bot_arrancar, daemon=True).start()
+        return True
+    if que == "terminal":
+        cmd = shlex.join(["foot", "-T", BOT.get("nombre", "Bot"), "ssh", "-p", str(BOT.get("puerto", 22)), BOT["destino"]])
+        subprocess.run(["swaymsg", "workspace", "back_and_forth"], capture_output=True)
+        subprocess.Popen(["swaymsg", "exec", "--", cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    if que == "ip" and isinstance(valor, str) and HOST.fullmatch(valor.strip()):
+        if not _bot_cambiar_host(valor.strip()):
+            return False
+        _amfbot.update(estado="revisando", segundos=None, trabajo="revisar", error=None)
+        _amfbot_ya.set()
+        return True
+    return False
 
 
 def datos():
@@ -566,7 +647,7 @@ def datos():
         "brillo": brillo(),
         "volumen": volumen(),
         "sway": ventanas(),
-        "amfbot": dict(_amfbot),
+        "amfbot": _bot_info(),
         "bluetooth": bluetooth(),
         "encendida_min": round(float(leer("/proc/uptime", "0").split()[0]) / 60),
         "equipo": socket.gethostname(),
@@ -1022,6 +1103,9 @@ class Manejador(BaseHTTPRequestHandler):
                 json.dump(e, f, indent=2)
             _yt_cache["t"] = 0
             return self._responder(200, {"ok": True})
+        if self.path == "/api/bot":
+            ok = bot_accion(cuerpo.get("que"), cuerpo.get("valor"))
+            return self._responder(200 if ok else 409, {"ok": ok})
         if self.path == "/api/bluetooth":
             ok = bt_accion(cuerpo.get("que"), cuerpo.get("mac"))
             return self._responder(200 if ok else 409, {"ok": ok})

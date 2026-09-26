@@ -456,6 +456,28 @@
   .foto .info span { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
   .foto .secreto { padding: 22px 14px; text-align: center; color: var(--muted); font-size: 15px; }
   .huevo .xbtn { top: 12px; right: 12px; }
+  /* Menú que se abre al tocar el panel del bot o del Bluetooth */
+  .hoja .huevo-caja { width: min(620px, 100%); border-color: var(--green-bright); }
+  .hoja .huevo-cab h2 { font-size: 20px; }
+  .hoja-cuerpo { padding: 18px 22px 22px; display: grid; gap: 14px; font-size: 16px; }
+  #hojaVivo { display: grid; gap: 14px; }
+  .hoja-cuerpo .bt-cab .bot-txt { font-size: 26px; }
+  .hoja-cuerpo .bt-lista { display: grid; gap: 6px; }
+  .hoja-cuerpo .bt-lista .fila { font-size: 16px; }
+  .hoja-botones { display: flex; flex-wrap: wrap; gap: 10px; }
+  .hoja-botones .chip { min-height: 48px; padding: 0 18px; font-size: 15px; }
+  .hoja-botones .chip.prin { background: var(--green); color: #fff; border-color: var(--green-deep); }
+  .hoja-ip { display: grid; gap: 8px; border-top: 1px solid var(--tile-edge); padding-top: 14px; }
+  .hoja-ip label { font-weight: 700; }
+  .hoja-ip .cfg { display: flex; gap: 8px; }
+  .hoja-ip input { flex: 1; min-width: 0; min-height: 44px; font: 17px var(--font); padding: 0 12px; }
+  .hoja-ip .chip { min-height: 44px; }
+  .hoja-aviso { font-size: 14px; color: var(--muted); line-height: 1.45; }
+  .hoja-aviso code { font-size: 14px; color: var(--ink); background: var(--track); padding: 1px 5px; border-radius: 3px; }
+  .mod[data-k="bt"], .mod[data-k="amfbot"] { cursor: pointer; }
+  .editing .mod[data-k="bt"], .editing .mod[data-k="amfbot"] { cursor: grab; }
+  .mod.choca { outline-color: var(--crit) !important; }
+  .hoja-ip input.mal { outline: 2px solid var(--crit); }
 
   .offline {
     position: fixed; inset: auto 0 96px; margin: 0 auto; width: fit-content;
@@ -526,6 +548,14 @@
       <p class="huevo-intro">Las fotos de este escritorio las saqué yo, trabajando en el campo. Acá está dónde y cuándo, tal como lo guardó el celular.</p>
       <div class="huevo-fotos" id="huevoFotos"></div>
       <button type="button" class="xbtn" id="huevoCerrar" aria-label="Cerrar">✕</button>
+    </div>
+  </div>
+
+  <div class="huevo hoja" id="hoja" hidden>
+    <div class="huevo-caja" role="dialog" aria-labelledby="hojaTit">
+      <div class="huevo-cab"><h2 id="hojaTit">—</h2></div>
+      <div class="hoja-cuerpo"><div id="hojaVivo"></div><div id="hojaFijo"></div></div>
+      <button type="button" class="xbtn" id="hojaCerrar" aria-label="Cerrar">✕</button>
     </div>
   </div>
 
@@ -823,13 +853,27 @@
     el.style.left = p.x * 100 + "%"; el.style.top = p.y * 100 + "%";
     el.style.width = p.w * 100 + "%"; el.style.height = p.h * 100 + "%";
   }
+  // ¿Queda algo cortado adentro del panel?
+  function desborda(el) {
+    const b = el.querySelector(".body");
+    return b.scrollHeight > b.clientHeight + 2 || b.scrollWidth > b.clientWidth + 2;
+  }
+  // Prueba del tamaño que le corresponde para abajo (Grande → Ancho → Chico) hasta que todo entre.
+  // Devuelve la clase que quedó puesta, o null si ni en Chico entra.
+  function encajar(el, p, W, H) {
+    const orden = ["g", "m", "s"], max = claseDe(p, W, H);
+    for (const t of orden.slice(orden.indexOf(max))) {
+      if (!el.classList.contains(t)) { el.classList.remove("s", "m", "g"); el.classList.add(t); }
+      if (!desborda(el)) return t;
+    }
+    return null;
+  }
   function clases() {
-    if (!$("lienzo")) return;
+    if (!$("lienzo") || arrastre) return;
     const { W, H } = lienzoTam(); if (!W || !H) return;
     $("lienzo").querySelectorAll(".mod").forEach(el => {
       const p = actual()[Number(el.dataset.i)]; if (!p) return;
-      const t = claseDe(p, W, H);
-      if (t !== p.t || !el.classList.contains(t)) { el.classList.remove("s", "m", "g"); el.classList.add(t); p.t = t; }
+      p.t = encajar(el, p, W, H) || "s";
     });
   }
   // Los paneles sin lugar (página nueva, formato viejo, recién agregados) se acomodan en la grilla de 4 × 3
@@ -909,6 +953,24 @@
   window.addEventListener("resize", () => { if (vista === "run") medirLienzo(); });
 
   // Arrastrar para mover, tirador de la esquina para agrandar. Anda con mouse y con el dedo.
+  // Leyes de la física: un panel no se mete adentro de otro, y no se achica más de lo que su contenido deja.
+  const HUECO = 6;   // separación mínima entre paneles, en px
+  const chocan = (a, b) => a.x < b.x + b.w + HUECO && b.x < a.x + a.w + HUECO && a.y < b.y + b.h + HUECO && b.y < a.y + a.h + HUECO;
+  const enPx = (p, W, H) => ({ x: p.x * W, y: p.y * H, w: p.w * W, h: p.h * H });
+  // Los otros paneles de la Run Page, en px (sin contar los que ya estaban encimados de antes, así se pueden desenredar)
+  function obstaculos(p, W, H) {
+    const yo = enPx(p, W, H);
+    return actual().filter(q => q !== p && q.x != null).map(q => enPx(q, W, H)).filter(r => !chocan(yo, r));
+  }
+  // Primer lugar libre para un panel de w × h px, recorriendo de arriba a la izquierda
+  function lugarLibre(w, h, W, H) {
+    const otros = actual().filter(q => q.x != null).map(q => enPx(q, W, H));
+    for (let y = 0; y + h <= H; y += PASO) for (let x = 0; x + w <= W; x += PASO) {
+      const r = { x, y, w, h };
+      if (!otros.some(o => chocan(r, o))) return r;
+    }
+    return null;
+  }
   let arrastre = null;
   const TAM_TXT = { s: "Chico", m: "Ancho", g: "Grande" };
   $("modules").addEventListener("pointerdown", (e) => {
@@ -918,8 +980,9 @@
     if (!tirar && e.target.closest("button, input, textarea, .cfg")) return;
     const p = actual()[Number(el.dataset.i)]; if (!p) return;
     const { W, H } = lienzoTam();
+    const r = enPx(p, W, H);
     arrastre = { el, p, tirar, W, H, id: e.pointerId, x0: e.clientX, y0: e.clientY,
-      r: { x: p.x * W, y: p.y * H, w: p.w * W, h: p.h * H }, nuevo: null };
+      r, ult: r, otros: obstaculos(p, W, H), nuevo: null };
     el.classList.add("agarrado");
     el.setPointerCapture(e.pointerId);
     e.preventDefault();
@@ -936,16 +999,32 @@
       x = Math.min(Math.max(0, im(x + dx)), a.W - w);
       y = Math.min(Math.max(0, im(y + dy)), a.H - h);
     }
-    a.nuevo = { x: x / a.W, y: y / a.H, w: w / a.W, h: h / a.H };
-    ubicar(a.el, a.nuevo);
-    const t = claseDe(a.nuevo, a.W, a.H);
-    if (!a.el.classList.contains(t)) { a.el.classList.remove("s", "m", "g"); a.el.classList.add(t); }
-    a.el.querySelector(".medida").textContent = a.tirar ? `${TAM_TXT[t]} · ${Math.round(w)} × ${Math.round(h)}` : TAM_TXT[t];
+    // Si choca, prueba moverse (o estirarse) en un solo sentido: así "resbala" contra el otro panel en vez de frenarse en seco
+    const u = a.ult, libre = (r) => !a.otros.some(o => chocan(r, o));
+    const pruebas = a.tirar
+      ? [{ x, y, w, h }, { x, y, w, h: u.h }, { x, y, w: u.w, h }]
+      : [{ x, y, w, h }, { x, y: u.y, w, h }, { x: u.x, y, w, h }];
+    const r = pruebas.find(libre);
+    a.el.classList.toggle("choca", !r || r !== pruebas[0]);
+    if (!r) return;
+    const nuevo = { x: r.x / a.W, y: r.y / a.H, w: r.w / a.W, h: r.h / a.H };
+    ubicar(a.el, nuevo);
+    let t = encajar(a.el, nuevo, a.W, a.H);
+    // Al achicar: si el contenido ya no entra ni en Chico, no te deja achicar más
+    if (!t && (r.w < u.w || r.h < u.h)) {
+      ubicar(a.el, a.nuevo || a.p);
+      t = encajar(a.el, a.nuevo || a.p, a.W, a.H) || "s";
+      a.el.classList.add("choca");
+      return;
+    }
+    a.ult = r; a.nuevo = nuevo;
+    t = t || "s";
+    a.el.querySelector(".medida").textContent = a.tirar ? `${TAM_TXT[t]} · ${Math.round(r.w)} × ${Math.round(r.h)}` : TAM_TXT[t];
   });
   function soltar(e) {
     const a = arrastre; if (!a || e.pointerId !== a.id) return;
     arrastre = null;
-    a.el.classList.remove("agarrado");
+    a.el.classList.remove("agarrado", "choca");
     if (!a.nuevo) return;
     const r4 = v => Math.round(v * 10000) / 10000;
     Object.keys(a.nuevo).forEach(k => { a.p[k] = r4(a.nuevo[k]); });
@@ -1006,6 +1085,7 @@
     if (!toque || e.pointerId !== toque.id) return;
     const t = toque; toque = null;
     if (!t.horiz) return;
+    deslizado = performance.now();
     const dx = e.clientX - t.x, vel = Math.abs(dx) / Math.max(1, performance.now() - t.t);
     if (!cancelado && (Math.abs(dx) > $("modules").clientWidth * .2 || (Math.abs(dx) > 40 && vel > .5))) {
       deslizarA(dx < 0 ? 1 : -1);
@@ -1040,8 +1120,15 @@
   $("addBtn").addEventListener("click", () => listaPaneles($("trayItems").hidden));
   $("trayItems").addEventListener("click", (e) => {
     const b = e.target.closest("[data-add]"); if (!b) return;
+    const { W, H } = lienzoTam();
+    const r = lugarLibre(Math.max(MIN_W, W / 4 - 0.012 * W), Math.max(MIN_H, H / 3 - 0.02 * H), W, H) || lugarLibre(MIN_W, MIN_H, W, H);
+    if (!r) {
+      b.textContent = "No hay lugar: achicá o sacá un panel";
+      setTimeout(() => { b.textContent = "+ " + MODS[b.dataset.add].name; }, 2500);
+      return;
+    }
     listaPaneles(false);
-    actual().push({ k: b.dataset.add, t: "s" }); renderModules(); guardar();
+    actual().push({ k: b.dataset.add, t: "s", x: r.x / W, y: r.y / H, w: r.w / W, h: r.h / H }); renderModules(); guardar();
   });
   $("newPage").addEventListener("click", () => {
     paginas.push({ paneles: [] }); pg = paginas.length - 1; renderModules(); guardar();
@@ -1287,7 +1374,7 @@
   let tecleado = "";
   document.addEventListener("keydown", (e) => {
     if (["TEXTAREA", "INPUT"].includes(e.target.tagName)) return;
-    if (e.key === "Escape") $("huevo").hidden = true;
+    if (e.key === "Escape") { $("huevo").hidden = true; cerrarHoja(); }
     if (e.key.length !== 1) return;
     tecleado = (tecleado + e.key.toLowerCase()).slice(-5);
     if (tecleado === "deere") abrirHuevo();
@@ -1355,6 +1442,125 @@
     const last = pts[pts.length - 1];
     $("sparkDot").setAttribute("cx", last[0] - 3.5); $("sparkDot").setAttribute("cy", last[1]);
   }
+
+  // ---------- Bluetooth: lo mismo se muestra en el panel y en su menú ----------
+  const BT_HACIENDO = { prender: "Prendiendo…", apagar: "Apagando…", buscar: "Buscando aparatos cerca…",
+                        conectar: "Conectando…", desconectar: "Desconectando…", vincular: "Vinculando…" };
+  const BT_FALLO = { conectar: "No se pudo conectar: ¿está prendido y cerca?", vincular: "No se pudo vincular: ponelo en modo emparejar",
+                     buscar: "No se pudo buscar", prender: "No se pudo prender", apagar: "No se pudo apagar",
+                     desconectar: "No se pudo desconectar" };
+  const btConectados = (bt) => (bt.dispositivos || []).filter(x => x.conectado);
+  const btLuz = (bt) => !bt.hay ? "mal" : bt.prendido ? (btConectados(bt).length ? "ok" : "duda") : "";
+  const btTxt = (bt) => !bt.hay ? "Sin placa" : bt.prendido ? "Prendido" : "Apagado";
+  function btResumen(bt) {
+    const tr = bt.trabajo || {}, con = btConectados(bt);
+    if (tr.que) return BT_HACIENDO[tr.que] || "…";
+    if (tr.error) return BT_FALLO[tr.error] || "No se pudo";
+    return !bt.hay ? "La laptop no ve el Bluetooth"
+      : !bt.prendido ? "Tocá Prender para usarlo"
+      : con.length ? "Conectado a " + con.map(x => x.nombre + (x.bateria != null ? ` (${x.bateria}%)` : "")).join(", ")
+      : "Nada conectado";
+  }
+  function btFilas(bt) {
+    const tr = bt.trabajo || {}, ocupado = !!tr.que;
+    const fila = (x, que, txt, on) => `<div class="fila"><span>${esc(x.nombre)}${x.bateria != null ? `<em>${x.bateria}%</em>` : ""}</span>
+      <button type="button" class="chip${on ? " on" : ""}" data-bt="${que}" data-mac="${esc(x.mac)}" ${ocupado || !bt.prendido ? "disabled" : ""}>${
+        tr.mac === x.mac ? "…" : txt}</button></div>`;
+    let html = (bt.dispositivos || []).map(x => x.conectado ? fila(x, "desconectar", "Conectado", true) : fila(x, "conectar", "Conectar")).join("");
+    if (!html && bt.prendido) html = '<div class="sub">Todavía no vinculaste nada. Poné el aparato en modo emparejar y tocá <b>Buscar nuevos</b>.</div>';
+    if (bt.prendido && (bt.encontrados || []).length) html += "<h4>Encontrados cerca</h4>" + bt.encontrados.map(x => fila(x, "vincular", "Vincular")).join("");
+    return html;
+  }
+
+  // ---------- Bot: lo mismo se muestra en el panel y en su menú ----------
+  const botLuz = (bot) => ({ andando: "ok", detenido: "mal", sin_conexion: "duda" }[bot.estado] || "");
+  const botTxt = (bot) => bot.trabajo === "arrancar" ? "Arrancando…" : bot.trabajo === "revisar" ? "Revisando…"
+    : { andando: "Andando", detenido: "Detenido", sin_conexion: "Sin señal", revisando: "Revisando…", sin_configurar: "Sin configurar" }[bot.estado] || "—";
+  function botResumen(bot) {
+    let sub = `Preguntando a ${bot.dispositivo}`;
+    if (bot.estado === "sin_configurar") sub = "Configuralo en local/config.json";
+    if (bot.estado === "andando") sub = bot.segundos != null ? `Hace ${durBot(Math.round(bot.segundos / 60))} sin parar` : "Corriendo";
+    if (bot.estado === "detenido") sub = `Revisá ${bot.dispositivo}`;
+    if (bot.estado === "sin_conexion") sub = `No encuentro ${bot.dispositivo} en la red`;
+    if (bot.error === "arrancar") sub = "No se pudo arrancar el bot";
+    if (bot.revisado) sub += ` · ${bot.revisado}`;
+    return sub;
+  }
+
+  // ---------- Menú al tocar el panel del bot o del Bluetooth ----------
+  // #hojaVivo se repinta con cada dato nuevo; #hojaFijo (el campo de la IP) se arma una vez, así no te borra lo que escribís.
+  let hoja = null, deslizado = 0;
+  function abrirHoja(k) {
+    hoja = k;
+    $("hojaVivo").dataset.html = "";
+    $("hojaFijo").innerHTML = "";
+    if (k === "amfbot") {
+      const bot = (ultimo || {}).amfbot || {};
+      set("hojaTit", bot.nombre || "Bot");
+      if (bot.host) $("hojaFijo").innerHTML = `<div class="hoja-ip">
+        <label for="hojaIp">IP de ${esc(bot.dispositivo || "el celular")}</label>
+        <div class="cfg"><input id="hojaIp" type="text" inputmode="decimal" spellcheck="false" value="${esc(bot.host)}">
+          <button type="button" class="chip" data-bot="ip">Guardar</button></div>
+        <div class="hoja-aviso">Si ${esc(bot.dispositivo || "el celular")} cambió de red, la IP cambia. En Termux escribí <code>ifconfig</code>
+          y copiá el número que sigue a <code>inet</code> y empieza igual que el de esta compu.</div></div>`;
+    } else {
+      set("hojaTit", "Bluetooth");
+    }
+    pintarHoja(ultimo);
+    $("hoja").hidden = false;
+  }
+  function cerrarHoja() { hoja = null; $("hoja").hidden = true; }
+  function pintarHoja(d) {
+    if (!hoja || !d) return;
+    let html = "";
+    if (hoja === "amfbot") {
+      const bot = d.amfbot || {}, ocupado = !!bot.trabajo;
+      const dis = ocupado ? " disabled" : "";
+      html = `<div class="bt-cab"><span class="bot-luz ${botLuz(bot)}"></span><span class="bot-txt">${esc(botTxt(bot))}</span></div>
+        <div class="sub">${esc(botResumen(bot))}</div>
+        <div class="hoja-botones">
+          ${bot.puede_arrancar && bot.estado === "detenido" ? `<button type="button" class="chip prin" data-bot="arrancar"${dis}>Arrancar el bot</button>` : ""}
+          <button type="button" class="chip" data-bot="revisar"${dis}>${bot.trabajo === "revisar" ? "Revisando…" : "Revisar ahora"}</button>
+          ${bot.host ? `<button type="button" class="chip" data-bot="terminal">Entrar por SSH</button>` : ""}
+        </div>`;
+    } else {
+      const bt = d.bluetooth || {}, tr = bt.trabajo || {}, ocupado = !!tr.que;
+      html = `<div class="bt-cab"><span class="bot-luz ${btLuz(bt)}"></span><span class="bot-txt">${esc(btTxt(bt))}</span>
+          ${bt.hay ? `<button type="button" class="chip" data-bt="${bt.prendido ? "apagar" : "prender"}"${ocupado ? " disabled" : ""}>${bt.prendido ? "Apagar" : "Prender"}</button>` : ""}</div>
+        <div class="sub">${esc(btResumen(bt))}</div>
+        <div class="bt-lista">${btFilas(bt)}</div>
+        <div class="hoja-botones"><button type="button" class="chip prin" data-bt="buscar"${ocupado || !bt.prendido ? " disabled" : ""}>${
+          tr.que === "buscar" ? "Buscando…" : "Buscar nuevos"}</button></div>
+        ${bt.prendido && (bt.dispositivos || []).length ? '<div class="hoja-aviso">Para un parlante o auriculares nuevos: ponelos en modo emparejar (suele ser mantener apretado el botón de Bluetooth), tocá <b>Buscar</b> y después <b>Vincular</b>.</div>' : ""}`;
+    }
+    const vivo = $("hojaVivo");
+    if (vivo.dataset.html !== html) { vivo.dataset.html = html; vivo.innerHTML = html; }
+  }
+  $("hojaCerrar").addEventListener("click", cerrarHoja);
+  $("hoja").addEventListener("click", (e) => {
+    if (e.target === $("hoja")) { cerrarHoja(); return; }   // tocar afuera de la caja
+    const b = e.target.closest("button"); if (!b || b.disabled) return;
+    if (b.dataset.bt) { api("/api/bluetooth", { que: b.dataset.bt, mac: b.dataset.mac || null }).then(actualizar).catch(() => {}); return; }
+    if (b.dataset.bot === "ip") {
+      const v = $("hojaIp").value.trim(); if (!v) return;
+      api("/api/bot", { que: "ip", valor: v }).then(r => {
+        $("hojaIp").classList.toggle("mal", !r.ok);
+        if (r.ok) actualizar();
+      }).catch(() => {});
+      return;
+    }
+    if (b.dataset.bot) {
+      api("/api/bot", { que: b.dataset.bot }).then(() => { if (b.dataset.bot === "terminal") cerrarHoja(); actualizar(); }).catch(() => {});
+    }
+  });
+  $("hoja").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "hojaIp") $("hoja").querySelector('[data-bot="ip"]').click(); });
+  // Tocar el panel (no sus botones) abre el menú
+  $("modules").addEventListener("click", (e) => {
+    if (editing || performance.now() - deslizado < 400) return;
+    if (e.target.closest("button, input, textarea, a")) return;
+    const m = e.target.closest('.mod[data-k="bt"], .mod[data-k="amfbot"]');
+    if (m) abrirHoja(m.dataset.k);
+  });
 
   function pintar(d) {
     set("cpu", d.cpu); lvl("cpuG", d.cpu, 70, 90); set("cpuSub", `${d.cpu_modelo} · ${d.hilos} hilos`);
@@ -1461,55 +1667,31 @@
     const bot = d.amfbot || {};
     const luz = $("botLuz");
     if (luz) {
-      const txt = { andando: "Andando", detenido: "Detenido", sin_conexion: "Sin señal", revisando: "Revisando…", sin_configurar: "Sin configurar" }[bot.estado] || "—";
       document.querySelectorAll('.mod[data-k="amfbot"] h3').forEach(h => { h.textContent = bot.nombre || "Bot"; });
-      luz.className = "bot-luz " + ({ andando: "ok", detenido: "mal", sin_conexion: "duda" }[bot.estado] || "");
-      set("botTxt", txt);
-      let sub = `Preguntando a ${bot.dispositivo}`;
-      if (bot.estado === "sin_configurar") sub = "Configuralo en local/config.json";
-      if (bot.estado === "andando") sub = bot.segundos != null ? `Hace ${durBot(Math.round(bot.segundos / 60))} sin parar` : "Corriendo";
-      if (bot.estado === "detenido") sub = `Revisá ${bot.dispositivo}`;
-      if (bot.estado === "sin_conexion") sub = `No encuentro ${bot.dispositivo} en la red`;
-      if (bot.revisado) sub += ` · ${bot.revisado}`;
-      set("botSub", sub);
+      luz.className = "bot-luz " + botLuz(bot);
+      set("botTxt", botTxt(bot));
+      set("botSub", botResumen(bot));
     }
 
     // Bluetooth
     const bt = d.bluetooth || {};
     if ($("btLuz")) {
-      const tr = bt.trabajo || {};
-      const ocupado = !!tr.que;
-      const con = (bt.dispositivos || []).filter(x => x.conectado);
-      $("btLuz").className = "bot-luz " + (!bt.hay ? "mal" : bt.prendido ? (con.length ? "ok" : "duda") : "");
-      set("btTxt", !bt.hay ? "Sin placa" : bt.prendido ? "Prendido" : "Apagado");
+      const ocupado = !!(bt.trabajo || {}).que;
+      $("btLuz").className = "bot-luz " + btLuz(bt);
+      set("btTxt", btTxt(bt));
       const pw = $("btPower");
       pw.hidden = !bt.hay;
       pw.dataset.que = bt.prendido ? "apagar" : "prender";
       pw.textContent = bt.prendido ? "Apagar" : "Prender";
       pw.disabled = ocupado;
-      const HACIENDO = { prender: "Prendiendo…", apagar: "Apagando…", buscar: "Buscando aparatos cerca…",
-                         conectar: "Conectando…", desconectar: "Desconectando…", vincular: "Vinculando…" };
-      const FALLO = { conectar: "No se pudo conectar: ¿está prendido y cerca?", vincular: "No se pudo vincular: ponelo en modo emparejar",
-                      buscar: "No se pudo buscar", prender: "No se pudo prender", apagar: "No se pudo apagar",
-                      desconectar: "No se pudo desconectar" };
-      let sub = !bt.hay ? "La laptop no ve el Bluetooth"
-        : !bt.prendido ? "Tocá Prender para usarlo"
-        : con.length ? "Conectado a " + con.map(x => x.nombre + (x.bateria != null ? ` (${x.bateria}%)` : "")).join(", ")
-        : "Nada conectado";
-      if (ocupado) sub = HACIENDO[tr.que] || sub;
-      else if (tr.error) sub = FALLO[tr.error] || sub;
-      set("btSub", sub);
+      set("btSub", btResumen(bt));
       const lista = $("btLista"), pie = $("btBuscar");
       pie.disabled = ocupado || !bt.prendido;
-      pie.textContent = tr.que === "buscar" ? "Buscando…" : "Buscar nuevos";
-      const fila = (x, que, txt, on) => `<div class="fila"><span>${esc(x.nombre)}${x.bateria != null ? `<em>${x.bateria}%</em>` : ""}</span>
-        <button type="button" class="chip${on ? " on" : ""}" data-bt="${que}" data-mac="${esc(x.mac)}" ${ocupado || !bt.prendido ? "disabled" : ""}>${
-          tr.mac === x.mac ? "…" : txt}</button></div>`;
-      let html = (bt.dispositivos || []).map(x => x.conectado ? fila(x, "desconectar", "Conectado", true) : fila(x, "conectar", "Conectar")).join("");
-      if (!html && bt.prendido) html = '<div class="sub">Todavía no vinculaste nada. Poné el aparato en modo emparejar y tocá <b>Buscar nuevos</b>.</div>';
-      if (bt.prendido && (bt.encontrados || []).length) html += "<h4>Encontrados cerca</h4>" + bt.encontrados.map(x => fila(x, "vincular", "Vincular")).join("");
+      pie.textContent = (bt.trabajo || {}).que === "buscar" ? "Buscando…" : "Buscar nuevos";
+      const html = btFilas(bt);
       if (lista.dataset.html !== html) { lista.dataset.html = html; lista.innerHTML = html; }
     }
+    pintarHoja(d);
 
     // Estado general
     const pill = $("pill");
@@ -1523,6 +1705,7 @@
     else if (d.disco.pct >= 92) { txt = "Disco casi lleno"; cls = "warn"; }
     pill.textContent = txt; pill.className = "pill " + cls;
     drawSpark();
+    medirLienzo();   // si con los datos nuevos algo ya no entra, el panel pasa a un tamaño más chico
   }
 
   function actualizar() {
