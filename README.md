@@ -161,6 +161,8 @@ Se configura en `local/config.json`, que no se sube al repo:
 
 El `comando` corre en el otro equipo: tiene que salir con `0` si el bot anda (y puede imprimir cuántos
 segundos lleva andando) y con `1` si está detenido. Hace falta entrar por SSH **con llave**, sin contraseña.
+Cualquier otra línea que imprima se muestra en el menú del panel (por ejemplo, "WhatsApp conectado hace 2 h");
+si una empieza con ⚠, la luz se pone amarilla y ese aviso pasa al frente aunque el proceso siga andando.
 
 Tocando el panel se abre un menú para revisar ahora, entrar por SSH en una terminal, cambiar la IP
 a mano y, si pusiste `arrancar` (opcional), levantar el bot cuando está detenido.

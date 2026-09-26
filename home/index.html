@@ -1473,7 +1473,9 @@
   }
 
   // ---------- Bot: lo mismo se muestra en el panel y en su menú ----------
-  const botLuz = (bot) => ({ andando: "ok", detenido: "mal", sin_conexion: "duda" }[bot.estado] || "");
+  const botLuz = (bot) => bot.estado === "andando" && bot.alerta ? "duda" : ({ andando: "ok", detenido: "mal", sin_conexion: "duda" }[bot.estado] || "");
+  // Los detalles que manda el comando del bot, sin el emoji del principio
+  const botDetalle = (bot) => bot.estado === "andando" ? (bot.detalle || []).map(ln => ln.replace(/^[^\p{L}\p{N}]+/u, "")) : [];
   const botTxt = (bot) => bot.trabajo === "arrancar" ? "Arrancando…" : bot.trabajo === "revisar" ? "Revisando…"
     : bot.trabajo === "buscar" ? "Buscando…"
     : { andando: "Andando", detenido: "Detenido", sin_conexion: "Sin señal", revisando: "Revisando…", sin_configurar: "Sin configurar" }[bot.estado] || "—";
@@ -1481,6 +1483,8 @@
     let sub = `Preguntando a ${bot.dispositivo}`;
     if (bot.estado === "sin_configurar") sub = "Configuralo en local/config.json";
     if (bot.estado === "andando") sub = bot.segundos != null ? `Hace ${durBot(Math.round(bot.segundos / 60))} sin parar` : "Corriendo";
+    // Si algo anda mal (WhatsApp desconectado, bot trabado), eso va primero
+    if (bot.estado === "andando" && bot.alerta) sub = botDetalle(bot).find((_, i) => (bot.detalle[i] || "").startsWith("⚠")) || sub;
     if (bot.estado === "detenido") sub = `Revisá ${bot.dispositivo}`;
     if (bot.estado === "sin_conexion") sub = `No encuentro ${bot.dispositivo} en la red`;
     if (bot.estado === "sin_conexion" && bot.error === "buscar") sub = `No encontré ${bot.dispositivo} en la red: ¿está prendido, con Termux y sshd?`;
@@ -1522,6 +1526,7 @@
       const dis = ocupado ? " disabled" : "";
       html = `<div class="bt-cab"><span class="bot-luz ${botLuz(bot)}"></span><span class="bot-txt">${esc(botTxt(bot))}</span></div>
         <div class="sub">${esc(botResumen(bot))}</div>
+        ${botDetalle(bot).length ? `<div class="det">${botDetalle(bot).map(ln => `<div class="fila"><span>${esc(ln)}</span></div>`).join("")}</div>` : ""}
         <div class="hoja-botones">
           ${bot.puede_arrancar && bot.estado === "detenido" ? `<button type="button" class="chip prin" data-bot="arrancar"${dis}>Arrancar el bot</button>` : ""}
           ${bot.puede_buscar && bot.estado === "sin_conexion" ? `<button type="button" class="chip prin" data-bot="buscar"${dis}>Buscar en la red</button>` : ""}

@@ -621,8 +621,13 @@ def _vigilar_amfbot():
                 pass
         try:
             r = _bot_ssh(BOT["comando"])
+            lineas = [ln.strip() for ln in r.stdout.splitlines() if ln.strip()]
+            # Una línea que es solo un número = segundos andando; las demás son detalles para mostrar.
+            # Si una empieza con ⚠ el bot anda pero algo no está bien (luz amarilla).
+            detalle = [ln[:120] for ln in lineas if not ln.isdigit()][:4]
+            _amfbot.update(detalle=detalle, alerta=any(ln.startswith("⚠") for ln in detalle))
             if r.returncode == 0:
-                nums = [int(x) for x in r.stdout.split() if x.isdigit()]
+                nums = [int(ln) for ln in lineas if ln.isdigit()]
                 estado, seg = "andando", (nums[0] if nums else None)
             elif r.returncode == 1:
                 estado, seg = "detenido", None
